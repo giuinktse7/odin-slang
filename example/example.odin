@@ -68,79 +68,128 @@ diagnostics_check :: #force_inline proc(diagnostics: ^sp.IBlob, loc := #caller_l
 	}
 }
 
+print_and_release_diagnostics :: proc(diagnostics: ^^sp.IBlob) {
+	if diagnostics^ == nil {
+		return
+	}
+
+	blob := diagnostics^
+	buffer := slice.bytes_from_ptr(blob->getBufferPointer(), int(blob->getBufferSize()))
+	fmt.println(string(buffer))
+	blob->release()
+	diagnostics^ = nil
+}
+
 // Compiles the triangle.slang shader and creates the pipeline (or re-creates it if it exists)
-reload_shader_pipelines :: proc(renderer: ^Renderer, global_session: ^sp.IGlobalSession) {
+reload_shader_pipelines :: proc(renderer: ^Renderer, global_session: ^sp.IGlobalSession) -> bool {
 	start_compile_time := time.tick_now()
 
-	using sp
-	code, diagnostics: ^IBlob
-	r: Result
+	diagnostics: ^sp.IBlob
+	r: sp.Result
 
-	target_desc := TargetDesc {
-		structureSize = size_of(TargetDesc),
+	target_desc := sp.TargetDesc {
+		structureSize = size_of(sp.TargetDesc),
 		format        = .SPIRV,
 		flags         = {.GENERATE_SPIRV_DIRECTLY},
 		profile       = global_session->findProfile("sm_6_0"),
 	}
 
-	compiler_option_entries := [?]CompilerOptionEntry{
+	compiler_option_entries := [?]sp.CompilerOptionEntry{
 		{name = .VulkanUseEntryPointName, value = {intValue0 = 1}},
+		{name = .EmitSpirvDirectly, value = {kind = .Int, intValue0 = 1}},
+		{name = .Optimization, value = {kind = .Int, intValue0 = i32(sp.OptimizationLevel.NONE)}},
 	}
-	session_desc := SessionDesc {
-		structureSize            = size_of(SessionDesc),
+	session_desc := sp.SessionDesc {
+		structureSize            = size_of(sp.SessionDesc),
 		targets                  = &target_desc,
 		targetCount              = 1,
 		compilerOptionEntries    = &compiler_option_entries[0],
-		compilerOptionEntryCount = 1,
+		compilerOptionEntryCount = len(compiler_option_entries),
 	}
 
-	session: ^ISession
-	slang_check(global_session->createSession(session_desc, &session))
+	session: ^sp.ISession
+	r = global_session->createSession(session_desc, &session)
+	if sp.FAILED(r) || session == nil {
+		if session != nil {
+			session->release()
+		}
+		fmt.println("Could not create Slang compilation session:", r)
+		return false
+	}
 	defer session->release()
 
-	blob: ^IBlob
-
-	module: ^IModule = session->loadModule("example/triangle.slang", &diagnostics)
+	module: ^sp.IModule = session->loadModule("example/triangle.slang", &diagnostics)
+	print_and_release_diagnostics(&diagnostics)
 	if module == nil {
 		fmt.println("Shader compile error!")
-		return
+		return false
 	}
 	defer module->release()
-	diagnostics_check(diagnostics)
 
-	vertex_entry: ^IEntryPoint
+	vertex_entry: ^sp.IEntryPoint
 	r = module->findEntryPointByName("vertexmain", &vertex_entry)
-	slang_check(r)
+	if sp.FAILED(r) || vertex_entry == nil {
+		if vertex_entry != nil {
+			vertex_entry->release()
+		}
+		fmt.println("Expected 'vertexmain' entry point:", r)
+		return false
+	}
+	defer vertex_entry->release()
 
-	fragment_entry: ^IEntryPoint
+	fragment_entry: ^sp.IEntryPoint
 	r = module->findEntryPointByName("fragmentmain", &fragment_entry)
-	slang_check(r)
-
-	if vertex_entry == nil {
-		fmt.println("Expected 'vertexmain' entry point")
-		return;
+	if sp.FAILED(r) || fragment_entry == nil {
+		if fragment_entry != nil {
+			fragment_entry->release()
+		}
+		fmt.println("Expected 'fragmentmain' entry point:", r)
+		return false
 	}
-	if fragment_entry == nil {
-		fmt.println("Expected 'fragmentmain' entry point")
-		return;
-	}
+	defer fragment_entry->release()
 
-	components: [3]^IComponentType = {module, vertex_entry, fragment_entry}
+	components: [3]^sp.IComponentType = {module, vertex_entry, fragment_entry}
 
-	linked_program: ^IComponentType
+	composite: ^sp.IComponentType
 	r = session->createCompositeComponentType(
 		&components[0],
 		len(components),
-		&linked_program,
+		&composite,
 		&diagnostics,
 	)
-	diagnostics_check(diagnostics)
-	slang_check(r)
+	print_and_release_diagnostics(&diagnostics)
+	if sp.FAILED(r) || composite == nil {
+		if composite != nil {
+			composite->release()
+		}
+		fmt.println("Could not compose shader program:", r)
+		return false
+	}
+	defer composite->release()
 
-	target_code: ^IBlob
+	linked_program: ^sp.IComponentType
+	r = composite->link(&linked_program, &diagnostics)
+	print_and_release_diagnostics(&diagnostics)
+	if sp.FAILED(r) || linked_program == nil {
+		if linked_program != nil {
+			linked_program->release()
+		}
+		fmt.println("Could not link shader program:", r)
+		return false
+	}
+	defer linked_program->release()
+
+	target_code: ^sp.IBlob
 	r = linked_program->getTargetCode(0, &target_code, &diagnostics)
-	diagnostics_check(diagnostics)
-	slang_check(r)
+	print_and_release_diagnostics(&diagnostics)
+	if sp.FAILED(r) || target_code == nil {
+		if target_code != nil {
+			target_code->release()
+		}
+		fmt.println("Could not emit SPIR-V:", r)
+		return false
+	}
+	defer target_code->release()
 
 	code_size := target_code->getBufferSize()
 	source_code := slice.bytes_from_ptr(target_code->getBufferPointer(), auto_cast code_size)
@@ -152,31 +201,41 @@ reload_shader_pipelines :: proc(renderer: ^Renderer, global_session: ^sp.IGlobal
 	}
 
 	vk_module: vk.ShaderModule
-	vk_check(vk.CreateShaderModule(renderer.device, &info, nil, &vk_module))
+	if vk.CreateShaderModule(renderer.device, &info, nil, &vk_module) != .SUCCESS {
+		fmt.println("Could not create Vulkan shader module")
+		return false
+	}
+	defer vk.DestroyShaderModule(renderer.device, vk_module, nil)
 
 	// Create pipelines and pipeline layouts
+	push_constant_range := vk.PushConstantRange {
+		stageFlags = {.VERTEX},
+		offset     = 0,
+		size       = u32(size_of(ShaderPushConstants)),
+	}
 	pipeline_layout_create_info := vk.PipelineLayoutCreateInfo {
 		sType                  = .PIPELINE_LAYOUT_CREATE_INFO,
 		pNext                  = nil,
 		flags                  = {},
 		setLayoutCount         = 0,
 		pSetLayouts            = nil,
-		pushConstantRangeCount = 0,
-		pPushConstantRanges    = nil,
+		pushConstantRangeCount = 1,
+		pPushConstantRanges    = &push_constant_range,
 	}
 
-	if renderer.triangle_pipeline_layout != 0 {
-		vk.DestroyPipelineLayout(renderer.device, renderer.triangle_pipeline_layout, nil)
+	triangle_pipeline_layout: vk.PipelineLayout
+	if vk.CreatePipelineLayout(
+		renderer.device,
+		&pipeline_layout_create_info,
+		nil,
+		&triangle_pipeline_layout,
+	) != .SUCCESS {
+		fmt.println("Could not create graphics pipeline layout")
+		return false
 	}
-
-	vk_check(
-		vk.CreatePipelineLayout(
-			renderer.device,
-			&pipeline_layout_create_info,
-			nil,
-			&renderer.triangle_pipeline_layout,
-		),
-	)
+	defer if triangle_pipeline_layout != 0 {
+		vk.DestroyPipelineLayout(renderer.device, triangle_pipeline_layout, nil)
+	}
 
 	pipelineInfo := vk.GraphicsPipelineCreateInfo {
 		sType               = .GRAPHICS_PIPELINE_CREATE_INFO,
@@ -251,7 +310,7 @@ reload_shader_pipelines :: proc(renderer: ^Renderer, global_session: ^sp.IGlobal
 			minDepthBounds = 0.0,
 			maxDepthBounds = 1.0,
 		},
-		layout              = renderer.triangle_pipeline_layout,
+		layout              = triangle_pipeline_layout,
 		pDynamicState       = &{
 			sType = .PIPELINE_DYNAMIC_STATE_CREATE_INFO,
 			pDynamicStates = raw_data([]vk.DynamicState{.VIEWPORT, .SCISSOR}),
@@ -260,60 +319,68 @@ reload_shader_pipelines :: proc(renderer: ^Renderer, global_session: ^sp.IGlobal
 	}
 
 	triangle_pipeline: vk.Pipeline
+	defer if triangle_pipeline != 0 {
+		vk.DestroyPipeline(renderer.device, triangle_pipeline, nil)
+	}
 
 	if vk.CreateGraphicsPipelines(renderer.device, 0, 1, &pipelineInfo, nil, &triangle_pipeline) !=
 	   .SUCCESS {
 		fmt.println("Couldn't create graphics pipeline!")
-		return
+		return false
 	}
 
 	if renderer.triangle_pipeline != 0 {
 		vk.DestroyPipeline(renderer.device, renderer.triangle_pipeline, nil)
 	}
+	if renderer.triangle_pipeline_layout != 0 {
+		vk.DestroyPipelineLayout(renderer.device, renderer.triangle_pipeline_layout, nil)
+	}
 
 	renderer.triangle_pipeline = triangle_pipeline
-
-	// We don't need to keep the shader modules around
-	vk.DestroyShaderModule(renderer.device, vk_module, nil)
+	renderer.triangle_pipeline_layout = triangle_pipeline_layout
+	triangle_pipeline = 0
+	triangle_pipeline_layout = 0
 
 	duration_msec := time.tick_since(start_compile_time)
 	fmt.println("Loaded shader in", duration_msec)
+	return true
 }
 
 main :: proc() {
 	renderer: Renderer
+
+	// Preserve loader errors without dumping driver/layer discovery details.
+	_ = os.set_env("VK_LOADER_DEBUG", "error")
+	_ = os.set_env("DISABLE_VULKAN_OBS_CAPTURE", "1")
 
 	glfw.Init()
 
 	glfw.WindowHint(glfw.CLIENT_API, glfw.NO_API)
 	glfw.WindowHint(glfw.RESIZABLE, glfw.FALSE)
 
-	renderer.window = glfw.CreateWindow(800, 600, "Hello Triangle", nil, nil)
+	renderer.window = glfw.CreateWindow(800, 600, "Slang Shader Playground", nil, nil)
 
 	init_vulkan(&renderer)
 
 	global_session: ^sp.IGlobalSession
 	assert(sp.createGlobalSession(sp.API_VERSION, &global_session) == sp.OK)
+	defer sp.shutdown()
+	defer global_session->release()
 
 	// Load shaders
-	reload_shader_pipelines(&renderer, global_session)
+	_ = reload_shader_pipelines(&renderer, global_session)
 	assert(renderer.triangle_pipeline != 0, "Couldn't load shaders!")
 
 	current_last_write_time, ok := os.last_write_time_by_name("example/triangle.slang")
 	assert(ok == nil)
 
-	// Create index buffer
-	indices := [?]u32{0, 1, 2, 2, 3, 0}
-
-	indices_buffer := create_buffer(
-		&renderer,
-		auto_cast size_of(indices),
-		{.INDEX_BUFFER, .TRANSFER_DST},
-	)
-	staging_write_buffer_slice(&renderer, &indices_buffer, indices[:])
+	animation_start := time.tick_now()
 
 	for !glfw.WindowShouldClose(renderer.window) {
 		glfw.PollEvents()
+		if glfw.WindowShouldClose(renderer.window) {
+			break
+		}
 
 		last_write_time, err := os.last_write_time_by_name("example/triangle.slang")
 
@@ -331,7 +398,7 @@ main :: proc() {
 				)
 			}
 
-			reload_shader_pipelines(&renderer, global_session)
+			_ = reload_shader_pipelines(&renderer, global_session)
 			current_last_write_time = last_write_time
 		}
 
@@ -425,10 +492,20 @@ main :: proc() {
 		vk.CmdSetScissor(cmd, 0, 1, &scissor)
 
 		vk.CmdBindPipeline(cmd, .GRAPHICS, renderer.triangle_pipeline)
-		vk.CmdBindIndexBuffer(cmd, indices_buffer.buffer, 0, .UINT32)
+		shader_constants := ShaderPushConstants {
+			time = f32(time.duration_seconds(time.tick_since(animation_start))),
+		}
+		vk.CmdPushConstants(
+			cmd,
+			renderer.triangle_pipeline_layout,
+			{.VERTEX},
+			0,
+			u32(size_of(shader_constants)),
+			&shader_constants,
+		)
 
-		// Draw triangle
-		vk.CmdDrawIndexed(cmd, 3, 1, 0, 0, 0)
+		// Draw one oversized triangle generated entirely by the vertex shader.
+		vk.CmdDraw(cmd, 3, 1, 0, 0)
 
 		vk.CmdEndRenderingKHR(cmd)
 		// End Geometry Pass
@@ -564,9 +641,6 @@ main :: proc() {
 	// Cleanup our stuff
 	vk.DeviceWaitIdle(renderer.device)
 
-	vk.DestroyBuffer(renderer.device, indices_buffer.buffer, nil)
-	vk.FreeMemory(renderer.device, indices_buffer.memory, nil)
-
 	vk.DestroyPipeline(renderer.device, renderer.triangle_pipeline, nil)
 	vk.DestroyPipelineLayout(renderer.device, renderer.triangle_pipeline_layout, nil)
 
@@ -594,13 +668,15 @@ REQUIRED_FEATURES := vk.PhysicalDeviceFeatures2 {
 REQUIRED_VK_11_FEATURES := vk.PhysicalDeviceVulkan11Features {
 	sType                         = .PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
 	pNext                         = &REQUIRED_VK_12_FEATURES,
+	shaderDrawParameters           = true,
 	variablePointers              = true,
 	variablePointersStorageBuffer = true,
 }
 
 REQUIRED_VK_12_FEATURES := vk.PhysicalDeviceVulkan12Features {
-	sType = .PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-	pNext = &REQUIRED_VK_13_FEATURES,
+	sType             = .PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+	pNext             = &REQUIRED_VK_13_FEATURES,
+	timelineSemaphore = true,
 }
 
 REQUIRED_VK_13_FEATURES := vk.PhysicalDeviceVulkan13Features {
@@ -615,13 +691,11 @@ DEVICE_EXTENSIONS := []cstring {
 	vk.KHR_SYNCHRONIZATION_2_EXTENSION_NAME,        // Enabled by default in 1.3
 	vk.KHR_COPY_COMMANDS_2_EXTENSION_NAME,          // Enabled by default in 1.3
 	vk.KHR_DYNAMIC_RENDERING_EXTENSION_NAME,        // Enabled by default in 1.3
-	vk.KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME, // Enabled by default in 1.3
 }
 // Set validation layers to enable.
 VALIDATION_LAYERS := []cstring{"VK_LAYER_KHRONOS_validation"}
 
-// Set validation features to enable.
-VALIDATION_FEATURES := []vk.ValidationFeatureEnableEXT{.DEBUG_PRINTF}
+VALIDATION_MESSAGE_SEVERITY: vk.DebugUtilsMessageSeverityFlagsEXT = {.WARNING, .ERROR}
 
 // Number of frames to provide in flight.
 FRAME_OVERLAP :: 2
@@ -697,6 +771,10 @@ Renderer :: struct {
 	// Application resources
 	triangle_pipeline_layout: vk.PipelineLayout,
 	triangle_pipeline:        vk.Pipeline,
+}
+
+ShaderPushConstants :: struct {
+	time: f32,
 }
 
 FrameData :: struct {
@@ -1019,18 +1097,13 @@ init_vulkan :: proc(renderer: ^Renderer) {
 		sType                   = .INSTANCE_CREATE_INFO,
 		pNext                   = &vk.DebugUtilsMessengerCreateInfoEXT {
 			sType = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-			messageSeverity = {.WARNING, .ERROR, .INFO},
+			messageSeverity = VALIDATION_MESSAGE_SEVERITY,
 			messageType = {.GENERAL, .VALIDATION, .PERFORMANCE},
 			pfnUserCallback = debug_callback,
-			pNext = &vk.ValidationFeaturesEXT {
-				sType = .VALIDATION_FEATURES_EXT,
-				pEnabledValidationFeatures = raw_data(VALIDATION_FEATURES),
-				enabledValidationFeatureCount = u32(len(VALIDATION_LAYERS)),
-			},
 		},
 		pApplicationInfo        = &{
 			sType = .APPLICATION_INFO,
-			pApplicationName = "Hello Triangle",
+			pApplicationName = "Slang Shader Playground",
 			applicationVersion = vk.MAKE_VERSION(0, 0, 1),
 			pEngineName = "No Engine",
 			engineVersion = vk.MAKE_VERSION(1, 0, 0),
@@ -1051,21 +1124,9 @@ init_vulkan :: proc(renderer: ^Renderer) {
 	// Load instance-specific procedures
 	vk.load_proc_addresses_instance(renderer.instance)
 
-	n_ext: u32
-	vk.EnumerateInstanceExtensionProperties(nil, &n_ext, nil)
-
-	extension_props := make([]vk.ExtensionProperties, n_ext)
-	defer delete(extension_props)
-
-	vk.EnumerateInstanceExtensionProperties(nil, &n_ext, raw_data(extension_props))
-
-	for &ext in &extension_props {
-		fmt.println(" -", cstring(&ext.extensionName[0]))
-	}
-
 	debug_utils_create_info := vk.DebugUtilsMessengerCreateInfoEXT {
 		sType           = .DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-		messageSeverity = {.VERBOSE, .WARNING, .INFO, .ERROR},
+		messageSeverity = VALIDATION_MESSAGE_SEVERITY,
 		messageType     = {.GENERAL, .VALIDATION},
 		pfnUserCallback = debug_callback,
 		pUserData       = nil,
