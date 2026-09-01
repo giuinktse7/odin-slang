@@ -1,13 +1,1 @@
-# Ignore everything
-*
-# But descend into directories
-!*/
-
-!.gitignore
-!.gitmodules
-
-!example/**
-!slang/**
-
-!README.md
-!slang.LICENSE
+build/
