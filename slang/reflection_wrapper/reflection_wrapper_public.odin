@@ -120,6 +120,7 @@ VariableReflection_Vtable :: struct {
 	getUserAttributeByIndex : proc(this: ^sp.VariableReflection, index: u32) -> ^sp.Attribute,
 	findAttributeByName     : proc(this: ^sp.VariableReflection, globalSession: ^sp.IGlobalSession, name: cstring,) -> ^sp.Attribute,
 	getDefaultValueInt      : proc(this: ^sp.VariableReflection, value: ^i64) -> sp.Result,
+	getDefaultValueFloat    : proc(this: ^sp.VariableReflection, value: ^f32) -> sp.Result,
 
 }
 
@@ -244,6 +245,7 @@ ProgramLayout_Vtable :: struct {
 	findFunctionByName             : proc(this: ^sp.ProgramLayout, name: cstring) -> FunctionReflection,
 	findEntryPointByName           : proc(this: ^sp.ProgramLayout, name: cstring) -> EntryPointReflection,
 	toJson                         : proc(this: ^sp.ProgramLayout, outBlob: ^^sp.IBlob) -> sp.Result,
+	getBindlessSpaceIndex          : proc(this: ^sp.ProgramLayout) -> sp.Int,
 }
 
 
@@ -274,7 +276,7 @@ FunctionReflection_Vtable :: struct {
 	findModifier            : proc(this: ^sp.FunctionReflection, id: sp.ModifierID) -> ^sp.Modifier,
 	getGenericContainer     : proc(this: ^sp.FunctionReflection) -> GenericReflection,
 	applySpecializations    : proc(this: ^sp.FunctionReflection, generic: ^sp.GenericReflection) -> FunctionReflection,
-	specializeWithArgTypes  : proc(this: ^sp.FunctionReflection, argCount: u32, types: ^sp.TypeReflection) -> FunctionReflection,
+	specializeWithArgTypes  : proc(this: ^sp.FunctionReflection, argCount: u32, types: [^]^sp.TypeReflection) -> FunctionReflection,
 	getOverload             : proc(this: ^sp.FunctionReflection, index: u32) -> FunctionReflection,
 }
 

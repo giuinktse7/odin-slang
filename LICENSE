@@ -1,0 +1,22 @@
+Licensing Status
+================
+
+This repository is derived from:
+
+    https://github.com/DragosPopse/odin-slang
+
+The upstream repository did not include a license granting permission to use,
+copy, modify, or redistribute its source code. Consequently, this fork cannot
+grant an open-source license for the repository as a whole, and the inherited
+code is not offered under the Apache License 2.0 with the LLVM exception.
+
+Rights in inherited material remain with its respective copyright holders.
+No additional permission to use, copy, modify, sublicense, or redistribute that
+material is granted by this file. Obtain permission from the relevant copyright
+holders before using or distributing the repository outside any rights already
+provided by applicable law or platform terms.
+
+Third-party components retain their own licenses. In particular, the bundled
+Slang libraries and Slang-derived materials are subject to Slang's upstream
+license and applicable third-party notices. See slang.LICENSE and
+THIRD_PARTY_NOTICES.md.

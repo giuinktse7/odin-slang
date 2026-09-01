@@ -9,11 +9,11 @@ DiagnosticFlags :: enum i32 {
 
 Severity :: enum i32 {
 	DISABLED = 0, /**< A message that is disabled, filtered out. */
-	NOTE,         /**< An informative message. */
-	WARNING,      /**< A warning, which indicates a possible problem. */
-	ERROR,        /**< An error, indicating that compilation failed. */
-	FATAL,        /**< An unrecoverable error, which forced compilation to abort. */
-	INTERNAL,     /**< An internal error, indicating a logic error in the compiler.*/
+	NOTE     = 1, /**< An informative message. */
+	WARNING  = 2, /**< A warning, which indicates a possible problem. */
+	ERROR    = 3, /**< An error, indicating that compilation failed. */
+	FATAL    = 4, /**< An unrecoverable error, which forced compilation to abort. */
+	INTERNAL = 5, /**< An internal error, indicating a logic error in the compiler.*/
 }
 
 ICompileRequest :: struct #raw_union {
@@ -102,3 +102,6 @@ ICompileRequest :: struct #raw_union {
 		setTargetForceCLayout:         proc "system"(this: ^ICompileRequest,targetIndex: i32, value: bool,),
 	},
 }
+
+ICompileRequest_VTable :: type_of(ICompileRequest{}.vtable^)
+#assert(size_of(ICompileRequest_VTable) == 83 * size_of(rawptr))
