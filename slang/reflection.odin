@@ -25,11 +25,10 @@ DeclReflection           :: struct {}
 Attribute                :: struct {}
 TypeParameterReflection  :: struct {}
 GenericReflection        :: struct {}
-GenericArgType           :: struct {}
 
 SlangReflectionGenericArg :: struct #raw_union {
 	typeVal: ^TypeReflection,
-	intVal:  ^i64,
+	intVal:  i64,
 	boolVal: bool,
 }
 
@@ -38,10 +37,9 @@ ReflectionGenericArgType :: enum i32 {
 	INT  = 1,
 	BOOL = 2,
 }
+GenericArgType :: ReflectionGenericArgType
 
-Modifier :: struct {
-	id: ModifierID,
-}
+Modifier :: struct {}
 ModifierID :: enum u32 {
 	Shared         = u32(SlangModifierID(.SHARED)),
 	NoDiff         = u32(SlangModifierID(.NO_DIFF)),
@@ -209,6 +207,7 @@ TypeReflectionKind :: enum u32 {
 	Pointer              = u32(SlangTypeKind(.POINTER)),
 	DynamicResource      = u32(SlangTypeKind(.DYNAMIC_RESOURCE)),
 	MeshOutput           = u32(SlangTypeKind(.MESH_OUTPUT)),
+	Enum                 = u32(SlangTypeKind(.ENUM)),
 }
 
 SlangTypeKind :: enum u32 {

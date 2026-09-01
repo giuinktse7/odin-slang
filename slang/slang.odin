@@ -14,7 +14,7 @@ when ODIN_OS == .Linux {
 	foreign import libslang "lib/libslang.so"
 }
 
-// Note(Dragos): This is defined to be "pointer size". So ummmm check later
+// SlangInt and SlangUInt are explicitly pointer-sized in slang.h.
 Int :: int
 UInt :: uint
 Bool :: bool
@@ -111,7 +111,7 @@ CompileFlag :: enum u32 {
 }
 CompileFlags :: bit_set[CompileFlag; u32]
 
-TargetFlag :: enum i32 {
+TargetFlag :: enum u32 {
 	/* [deprecated] */ PARAMETER_BLOCK_USE_REGISTER_SPACE = 4, // This behavior is now enabled unconditionally
 	GENERATE_WHOLE_PROGRAM = 8,
 	DUMP_IR = 9,
@@ -415,7 +415,7 @@ CompileCoreModuleFlag :: enum u32 {
 	WriteDocumentation = 0x1,
 }
 
-CompileCoreModuleFlags :: bit_set[CompileCoreModuleFlag; u32]
+CompileCoreModuleFlags :: u32
 
 FAILED :: #force_inline proc "contextless"(#any_int status: int) -> bool { return status < 0 }
 SUCCEEDED :: #force_inline proc "contextless"(#any_int status: int) -> bool { return status >= 0 }
@@ -538,7 +538,7 @@ ISharedLibrary :: struct #raw_union {
 	#subtype icastable: ICastable,
 	using vtable: ^struct {
 		using icastable_vtable: ICastable_VTable,
-		findSymbolByName: proc "system" (this: ^ISharedLibrary, name: cstring) -> rawptr,
+		findSymbolAddressByName: proc "system"(this: ^ISharedLibrary, name: cstring) -> rawptr,
 	},
 }
 
@@ -555,7 +555,7 @@ PathType :: enum u32 {
 	FILE      = 1,
 }
 
-FileSystemContentsCallback :: #type proc(pathType: PathType, name: cstring, userData: rawptr)
+FileSystemContentsCallback :: #type proc "c"(pathType: PathType, name: cstring, userData: rawptr)
 
 OSPathKind :: enum u8 {
 	None            = 0,
@@ -580,9 +580,9 @@ IFileSystemExt :: struct #raw_union {
 IFileSystemExt_VTable :: struct {
 	using ifilesystem_vtable: IFileSystem_VTable,
 	getFileUniqueIdentity: proc "system"(this: ^IFileSystemExt, path: cstring, outUniqueIdentity: ^^IBlob) -> Result,
-	calcCombinedPath     : proc "system"(this: ^IFileSystemExt, fromPath, path: cstring, pathOut: ^^IBlob) -> Result,
+	calcCombinedPath     : proc "system"(this: ^IFileSystemExt, fromPathType: PathType, fromPath, path: cstring, pathOut: ^^IBlob) -> Result,
 	getPathType          : proc "system"(this: ^IFileSystemExt, path: cstring, pathTypeOut: ^PathType) -> Result,
-	getPath              : proc "system"(this: ^IFileSystemExt, path: cstring, outPath: ^^IBlob) -> Result,
+	getPath              : proc "system"(this: ^IFileSystemExt, kind: PathKind, path: cstring, outPath: ^^IBlob) -> Result,
 	clearCache           : proc "system"(this: ^IFileSystemExt),
 	enumeratePathContents: proc "system"(this: ^IFileSystemExt, path: cstring, callback: FileSystemContentsCallback, userData: rawptr) -> Result,
 	getOSPathKind        : proc "system"(this: ^IFileSystemExt) -> OSPathKind,
@@ -651,7 +651,7 @@ IComponentType_VTable :: struct {
 	getSpecializationParamCount: proc "system"(this: ^IComponentType) -> Int,
 	getEntryPointCode          : proc "system"(this: ^IComponentType, entryPointIndex: Int, targetIndex: Int, outCode: ^^IBlob, outDiagnostics: ^^IBlob) -> Result,
 	getResultAsFileSystem      : proc "system"(this: ^IComponentType, entryPointIndex: Int, targetIndex: Int, outFileSystem: ^^IMutableFileSystem) -> Result,
-	getEntryPointHash          : proc "system"(this: ^IComponentType, entryPointIndex, targetIndex: Int, outHash: ^^IBlob) -> Result,
+	getEntryPointHash          : proc "system"(this: ^IComponentType, entryPointIndex, targetIndex: Int, outHash: ^^IBlob),
 	specialize                 : proc "system"(this: ^IComponentType, specializationArgs: [^]SpecializationArg, specializationArgCount: Int, outSpecializedComponentType: ^^IComponentType, outDiagnostics: ^^IBlob) -> Result,
 	link                       : proc "system"(this: ^IComponentType, outLinkedComponentType: ^^IComponentType, outDiagnostics: ^^IBlob) -> Result,
 	getEntryPointHostCallable  : proc "system"(this: ^IComponentType, entryPointIndex, targetIndex: i32, outSharedLibrary: ^^ISharedLibrary, outDiagnostics: ^^IBlob) -> Result,
@@ -679,11 +679,14 @@ ITypeConformance :: struct #raw_union {
 
 IComponentType2 :: struct #raw_union {
 	#subtype iunknown: IUnknown,
-	using vtable: ^struct {
-		using iunknown_vtable:      IUnknown_VTable,
-		getTargetCompileResult    : proc "system"( this: ^IComponentType2, targetIndex: Int, outCompileResult: ^^ICompileResult, outDiagnostics: ^^IBlob = nil,) -> Result,
-		getEntryPointCompileResult: proc "system"( this: ^IComponentType2, entryPointIndex: Int, targetIndex: Int, outCompileResult: ^^ICompileResult, outDiagnostics: ^^IBlob = nil,) -> Result,
-	},
+	using vtable: ^IComponentType2_VTable,
+}
+
+IComponentType2_VTable :: struct {
+	using iunknown_vtable: IUnknown_VTable,
+	getTargetCompileResult    : proc "system"(this: ^IComponentType2, targetIndex: Int, outCompileResult: ^^ICompileResult, outDiagnostics: ^^IBlob = nil) -> Result,
+	getEntryPointCompileResult: proc "system"(this: ^IComponentType2, entryPointIndex: Int, targetIndex: Int, outCompileResult: ^^ICompileResult, outDiagnostics: ^^IBlob = nil) -> Result,
+	getTargetHostCallable     : proc "system"(this: ^IComponentType2, targetIndex: i32, outSharedLibrary: ^^ISharedLibrary, outDiagnostics: ^^IBlob = nil) -> Result,
 }
 
 IModule :: struct #raw_union {
@@ -786,7 +789,7 @@ PreprocessorMacroDesc :: struct {
 	value: cstring,
 }
 
-SessionFlags :: enum i32 { }
+SessionFlags :: u32
 
 SessionDesc :: struct {
 	structureSize           : uint,
@@ -869,34 +872,42 @@ ContainerType :: enum i32 {
 	ConstantBuffer   = 3,
 	ParameterBlock   = 4,
 }
+
+SourceLocation :: struct {
+	filePath: cstring,
+	line    : Int,
+	column  : Int,
 }
 
 
 ISession :: struct #raw_union {
 	#subtype iunknown: IUnknown,
-	using vtable: ^struct {
-		using iunknown_vtable: IUnknown_VTable,
-		getGlobalSession                     : proc "system"(this: ^ISession) -> ^IGlobalSession,
-		loadModule                           : proc "system"(this: ^ISession, moduleName: cstring, outDiagnostics: ^^IBlob) -> ^IModule,
-		loadModuleFromSource                 : proc "system"(this: ^ISession, moduleName: cstring, path: cstring, source: ^IBlob, outDiagnostics: ^^IBlob) -> ^IModule,
-		createCompositeComponentType         : proc "system"(this: ^ISession, componentTypes: [^]^IComponentType, componentTypeCount: Int, outCompositeComponentType: ^^IComponentType, outDiagnostics: ^^IBlob) -> Result,
-		specializeType                       : proc "system"(this: ^ISession, type: ^TypeReflection, specializationArgs: [^]SpecializationArg, specializationArgCount: Int, outDiagnostics: ^^IBlob) -> ^TypeReflection,
-		getTypeLayout                        : proc "system"(this: ^ISession, type: ^TypeReflection, targetIndex: Int, rules: LayoutRules, outDiagnostics: ^^IBlob) -> ^TypeLayoutReflection,
-		getContainerType                     : proc "system"(this: ^ISession, elementType: ^TypeReflection, containerType: ContainerType, outDiagnostics: ^^IBlob) -> ^TypeReflection,
-		getDynamicType                       : proc "system"(this: ^ISession) -> ^TypeReflection,
-		getTypeRTTIMangledName               : proc "system"(this: ^ISession, type: ^TypeReflection, outNameBlob: ^^IBlob) -> Result,
-		getTypeConformanceWitnessMangledName : proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outNameBlob: ^^IBlob) -> Result,
-		getTypeConformanceWitnessSequentialID: proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outId: ^u32) -> Result,
-		createCompileRequest                 : proc "system"(this: ^ISession, outCompileRequest: ^^ICompileRequest) -> Result,
-		createTypeConformanceComponentType   : proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outConformance: ^^ITypeConformance, conformanceIdOverride: Int, outDiagnostics: ^^IBlob) -> Result,
-		loadModuleFromIRBlob                 : proc "system"(this: ^ISession, moduleName: cstring, path: cstring, source: ^IBlob, outDiagnostics: ^^IBlob) -> ^IModule,
-		getLoadedModuleCount                 : proc "system"(this: ^ISession) -> Int,
-		getLoadedModule                      : proc "system"(this: ^ISession, indxe: Int) -> ^IModule,
-		isBinaryModuleUpToDate               : proc "system"(this: ^ISession, modulePath: cstring, binaryModuleBlob: ^IBlob) -> bool,
-		loadModuleFromSourceString           : proc "system"(this: ^ISession, moduleName, path, str: cstring, outDiagnostics: ^^IBlob) -> ^IModule,
-		getDynamicObjectRTTIBytes            : proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outRTTIDataBuffer: ^u32, bufferSizeInBytes: u32) -> Result,
-		loadModuleInfoFromIRBlob             : proc "system"(this: ^ISession, source: ^IBlob, outModuleVersion: ^Int, outModuleCompilerVersion: ^cstring, outModuleName: ^cstring) -> Result,
-	},
+	using vtable: ^ISession_VTable,
+}
+
+ISession_VTable :: struct {
+	using iunknown_vtable: IUnknown_VTable,
+	getGlobalSession                     : proc "system"(this: ^ISession) -> ^IGlobalSession,
+	loadModule                           : proc "system"(this: ^ISession, moduleName: cstring, outDiagnostics: ^^IBlob) -> ^IModule,
+	loadModuleFromSource                 : proc "system"(this: ^ISession, moduleName: cstring, path: cstring, source: ^IBlob, outDiagnostics: ^^IBlob) -> ^IModule,
+	createCompositeComponentType         : proc "system"(this: ^ISession, componentTypes: [^]^IComponentType, componentTypeCount: Int, outCompositeComponentType: ^^IComponentType, outDiagnostics: ^^IBlob) -> Result,
+	specializeType                       : proc "system"(this: ^ISession, type: ^TypeReflection, specializationArgs: [^]SpecializationArg, specializationArgCount: Int, outDiagnostics: ^^IBlob) -> ^TypeReflection,
+	getTypeLayout                        : proc "system"(this: ^ISession, type: ^TypeReflection, targetIndex: Int, rules: LayoutRules, outDiagnostics: ^^IBlob) -> ^TypeLayoutReflection,
+	getContainerType                     : proc "system"(this: ^ISession, elementType: ^TypeReflection, containerType: ContainerType, outDiagnostics: ^^IBlob) -> ^TypeReflection,
+	getDynamicType                       : proc "system"(this: ^ISession) -> ^TypeReflection,
+	getTypeRTTIMangledName               : proc "system"(this: ^ISession, type: ^TypeReflection, outNameBlob: ^^IBlob) -> Result,
+	getTypeConformanceWitnessMangledName : proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outNameBlob: ^^IBlob) -> Result,
+	getTypeConformanceWitnessSequentialID: proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outId: ^u32) -> Result,
+	createCompileRequest                 : proc "system"(this: ^ISession, outCompileRequest: ^^ICompileRequest) -> Result,
+	createTypeConformanceComponentType   : proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outConformance: ^^ITypeConformance, conformanceIdOverride: Int, outDiagnostics: ^^IBlob) -> Result,
+	loadModuleFromIRBlob                 : proc "system"(this: ^ISession, moduleName: cstring, path: cstring, source: ^IBlob, outDiagnostics: ^^IBlob) -> ^IModule,
+	getLoadedModuleCount                 : proc "system"(this: ^ISession) -> Int,
+	getLoadedModule                      : proc "system"(this: ^ISession, index: Int) -> ^IModule,
+	isBinaryModuleUpToDate               : proc "system"(this: ^ISession, modulePath: cstring, binaryModuleBlob: ^IBlob) -> bool,
+	loadModuleFromSourceString           : proc "system"(this: ^ISession, moduleName, path, str: cstring, outDiagnostics: ^^IBlob) -> ^IModule,
+	getDynamicObjectRTTIBytes            : proc "system"(this: ^ISession, type: ^TypeReflection, interfaceType: ^TypeReflection, outRTTIDataBuffer: ^u32, bufferSizeInBytes: u32) -> Result,
+	loadModuleInfoFromIRBlob             : proc "system"(this: ^ISession, source: ^IBlob, outModuleVersion: ^Int, outModuleCompilerVersion: ^cstring, outModuleName: ^cstring) -> Result,
+	getDeclSourceLocation                : proc "system"(this: ^ISession, decl: ^DeclReflection, outLocation: ^SourceLocation) -> Result,
 }
 
 
@@ -926,46 +937,49 @@ BuiltinModuleName :: enum i32 {
 
 IGlobalSession :: struct #raw_union {
 	#subtype iunknown: IUnknown,
-	using vtable: ^struct {
-		using iunknown_vtable: IUnknown_VTable,
-		createSession                     : proc "system"(this: ^IGlobalSession, #by_ptr desc: SessionDesc, outSession: ^^ISession) -> Result,
-		findProfile                       : proc "system"(this: ^IGlobalSession, name: cstring) -> ProfileID,
-		setDownstreamCompilerPath         : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, path: cstring),
-		setDownstreamCompilerPrelude      : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, preduleText: cstring),
-		getDownstreamCompilerPrelude      : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, outPrelude: ^^IBlob),
-		getBuildTagString                 : proc "system"(this: ^IGlobalSession) -> cstring,
-		setDefaultDownstreamCompiler      : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage, defaultCompiler: PassThrough) -> Result,
-		getDefaultDownstreamCompiler      : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage) -> PassThrough,
-		setLanguagePrelude                : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage, preludeText: cstring),
-		getLanguagePrelude                : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage, outPrelude: ^^IBlob),
-		createCompileRequest              : proc "system"(this: ^IGlobalSession, outCompilerRequest: ^^ICompileRequest) -> Result, /* [deprecated] */
-		addBuiltins                       : proc "system"(this: ^IGlobalSession, sourcePath: cstring, sourceString: cstring),
-		setSharedLibraryLoader            : proc "system"(this: ^IGlobalSession, loader: ^ISharedLibraryLoader),
-		getSharedLibraryLoader            : proc "system"(this: ^IGlobalSession) -> ^ISharedLibraryLoader,
-		checkCompileTargetSupport         : proc "system"(this: ^IGlobalSession, target: CompileTarget) -> Result,
-		checkPassThroughSupport           : proc "system"(this: ^IGlobalSession, passThrough: PassThrough) -> Result,
-		compileCoreModule                 : proc "system"(this: ^IGlobalSession, flags: CompileCoreModuleFlags) -> Result,
-		loadCoreModule                    : proc "system"(this: ^IGlobalSession, coreModule: rawptr, coreModuleSizeInBytes: uint) -> Result,
-		saveCoreModule                    : proc "system"(this: ^IGlobalSession, archiveType: ArchiveType, outBlob: ^^IBlob) -> Result,
-		findCapability                    : proc "system"(this: ^IGlobalSession, name: cstring) -> CapabilityID,
-		setDownstreamCompilerForTransition: proc "system"(this: ^IGlobalSession, source: CompileTarget, target: CompileTarget, compiler: PassThrough),
-		getDownstreamCompilerForTransition: proc "system"(this: ^IGlobalSession, source, target: CompileTarget) -> PassThrough,
-		getCompilerElapsedTime            : proc "system"(this: ^IGlobalSession, outTotalTime, outDownstreamTime: ^f64),
-		setSPIRVCoreGrammar               : proc "system"(this: ^IGlobalSession, jsonPath: cstring) -> Result,
-		parseCommandLineArguments         : proc "system"(this: ^IGlobalSession, argc: i32, argv: [^]cstring, outSessionDesc: ^SessionDesc, outAuxAllocation: ^^IUnknown) -> Result,
-		getSessionDescDigest              : proc "system"(this: ^IGlobalSession, sessionDesc: ^SessionDesc, outBlob: ^^IBlob) -> Result,
-		compileBuiltinModule:               proc "system"(this: ^IGlobalSession, module: BuiltinModuleName, flags: CompileCoreModuleFlags) -> Result, 
-		loadBuiltinModule:                  proc "system"(this: ^IGlobalSession, module: BuiltinModuleName, moduleData: rawptr, sizeInBytes: uint) -> Result, 
-		saveBuiltinModule:                  proc "system"(this: ^IGlobalSession, module: BuiltinModuleName, outBlob: ^^IBlob) -> Result,
-	},
+	using vtable: ^IGlobalSession_VTable,
+}
+
+IGlobalSession_VTable :: struct {
+	using iunknown_vtable: IUnknown_VTable,
+	createSession                     : proc "system"(this: ^IGlobalSession, #by_ptr desc: SessionDesc, outSession: ^^ISession) -> Result,
+	findProfile                       : proc "system"(this: ^IGlobalSession, name: cstring) -> ProfileID,
+	setDownstreamCompilerPath         : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, path: cstring),
+	setDownstreamCompilerPrelude      : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, preludeText: cstring),
+	getDownstreamCompilerPrelude      : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, outPrelude: ^^IBlob),
+	getBuildTagString                 : proc "system"(this: ^IGlobalSession) -> cstring,
+	setDefaultDownstreamCompiler      : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage, defaultCompiler: PassThrough) -> Result,
+	getDefaultDownstreamCompiler      : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage) -> PassThrough,
+	setLanguagePrelude                : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage, preludeText: cstring),
+	getLanguagePrelude                : proc "system"(this: ^IGlobalSession, sourceLanguage: SourceLanguage, outPrelude: ^^IBlob),
+	createCompileRequest              : proc "system"(this: ^IGlobalSession, outCompilerRequest: ^^ICompileRequest) -> Result, /* deprecated */
+	addBuiltins                       : proc "system"(this: ^IGlobalSession, sourcePath: cstring, sourceString: cstring),
+	setSharedLibraryLoader            : proc "system"(this: ^IGlobalSession, loader: ^ISharedLibraryLoader),
+	getSharedLibraryLoader            : proc "system"(this: ^IGlobalSession) -> ^ISharedLibraryLoader,
+	checkCompileTargetSupport         : proc "system"(this: ^IGlobalSession, target: CompileTarget) -> Result,
+	checkPassThroughSupport           : proc "system"(this: ^IGlobalSession, passThrough: PassThrough) -> Result,
+	compileCoreModule                 : proc "system"(this: ^IGlobalSession, flags: CompileCoreModuleFlags) -> Result,
+	loadCoreModule                    : proc "system"(this: ^IGlobalSession, coreModule: rawptr, coreModuleSizeInBytes: uint) -> Result,
+	saveCoreModule                    : proc "system"(this: ^IGlobalSession, archiveType: ArchiveType, outBlob: ^^IBlob) -> Result,
+	findCapability                    : proc "system"(this: ^IGlobalSession, name: cstring) -> CapabilityID,
+	setDownstreamCompilerForTransition: proc "system"(this: ^IGlobalSession, source: CompileTarget, target: CompileTarget, compiler: PassThrough),
+	getDownstreamCompilerForTransition: proc "system"(this: ^IGlobalSession, source, target: CompileTarget) -> PassThrough,
+	getCompilerElapsedTime            : proc "system"(this: ^IGlobalSession, outTotalTime, outDownstreamTime: ^f64),
+	setSPIRVCoreGrammar               : proc "system"(this: ^IGlobalSession, jsonPath: cstring) -> Result,
+	parseCommandLineArguments         : proc "system"(this: ^IGlobalSession, argc: i32, argv: [^]cstring, outSessionDesc: ^SessionDesc, outAuxAllocation: ^^IUnknown) -> Result,
+	getSessionDescDigest              : proc "system"(this: ^IGlobalSession, sessionDesc: ^SessionDesc, outBlob: ^^IBlob) -> Result,
+	compileBuiltinModule              : proc "system"(this: ^IGlobalSession, module: BuiltinModuleName, flags: CompileCoreModuleFlags) -> Result,
+	loadBuiltinModule                 : proc "system"(this: ^IGlobalSession, module: BuiltinModuleName, moduleData: rawptr, sizeInBytes: uint) -> Result,
+	saveBuiltinModule                 : proc "system"(this: ^IGlobalSession, module: BuiltinModuleName, archiveType: ArchiveType, outBlob: ^^IBlob) -> Result,
+	getDownstreamCompilerVersion      : proc "system"(this: ^IGlobalSession, passThrough: PassThrough, outMajor, outMinor: ^i32) -> Result,
 }
 
 @(link_prefix="slang_")
 @(default_calling_convention="c")
 foreign libslang {
 	createBlob :: proc(data: rawptr, size: uint) -> ^IBlob ---
-	loadModuleFromSource :: proc(session: ^ISession, path: cstring, source: cstring, sourceSize: uint, outDiagnostics: ^^IBlob = nil) -> ^IModule ---
-	loadModuleFromIRBlob :: proc(session: ^ISession, moduleName: cstring, path: cstring, source: cstring, sourceSize: uint, outDiagnostics: ^^IBlob = nil) -> ^IModule ---
+	loadModuleFromSource :: proc(session: ^ISession, moduleName, path: cstring, source: cstring, sourceSize: uint, outDiagnostics: ^^IBlob = nil) -> ^IModule ---
+	loadModuleFromIRBlob :: proc(session: ^ISession, moduleName: cstring, path: cstring, source: rawptr, sourceSize: uint, outDiagnostics: ^^IBlob = nil) -> ^IModule ---
 	loadModuleInfoFromIRBlob :: proc(session: ^ISession, source: rawptr, sourceSize: uint, outModuleVersion: ^Int, outModuleCompilerVersion: ^cstring, outModuleName: ^cstring) -> Result ---
 	createGlobalSession :: proc(apiVersion: Int, outGlobalSession: ^^IGlobalSession) -> Result ---
 	createGlobalSession2 :: proc(#by_ptr desc: GlobalSessionDesc, outGlobalSession: ^^IGlobalSession) -> Result ---
