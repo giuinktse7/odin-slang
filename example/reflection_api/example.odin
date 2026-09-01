@@ -46,6 +46,8 @@ g_metadataForEntryPoints: [dynamic]^sp.IMetadata
 g_programLayout: ^sp.ProgramLayout
 g_SourceFileNames: []cstring
 
+SLANG_REFLECTION_ENTRY_POINT_METADATA :: #config(SLANG_REFLECTION_ENTRY_POINT_METADATA, true)
+
 printIndentation :: proc() {
 	for _ in 1..<g_indentation {
 		print(" ")
@@ -813,8 +815,10 @@ compileAndReflectProgram :: proc(session: ^sp.ISession, sourceFileName: cstring)
 			continue
 		}
 
-		ex.slang_check(collectEntryPointMetadata(
-			program, targetIndex, int(definedEntryPointCount)))
+		when SLANG_REFLECTION_ENTRY_POINT_METADATA {
+			ex.slang_check(collectEntryPointMetadata(
+				program, targetIndex, int(definedEntryPointCount)))
+		}
 
 		g_programLayout = programLayout
 		printProgramLayout(programLayout, .SPIRV)
