@@ -358,6 +358,17 @@ BindingType :: enum u32 {
 	EXT_MASK = 0xFF00,
 }
 
+#assert(size_of(SlangReflectionGenericArg) == 8 && align_of(SlangReflectionGenericArg) == 8)
+#assert(offset_of(SlangReflectionGenericArg, typeVal) == 0)
+#assert(offset_of(SlangReflectionGenericArg, intVal) == 0)
+#assert(offset_of(SlangReflectionGenericArg, boolVal) == 0)
+#assert(size_of(ReflectionGenericArgType) == 4)
+#assert(int(SlangTypeKind.ENUM) == 20)
+#assert(int(SlangScalarType.BFLOAT16) == 16)
+#assert(int(SlangScalarType.FLOAT_E5M2) == 18)
+#assert(int(DeclKind.ENUM) == 7)
+#assert(int(SlangParameterCategory.COUNT) == 25)
+
 @(link_prefix="sp")
 @(default_calling_convention="c")
 foreign libslang {

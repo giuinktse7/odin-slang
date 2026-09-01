@@ -102,3 +102,6 @@ ICompileRequest :: struct #raw_union {
 		setTargetForceCLayout:         proc "system"(this: ^ICompileRequest,targetIndex: i32, value: bool,),
 	},
 }
+
+ICompileRequest_VTable :: type_of(ICompileRequest{}.vtable^)
+#assert(size_of(ICompileRequest_VTable) == 83 * size_of(rawptr))
