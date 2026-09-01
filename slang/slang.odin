@@ -26,78 +26,86 @@ IUnknown_UUID := UUID{0x00000000, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00, 0x00,
 
 
 PassThrough :: enum i32 {
-	None,
-	FXC,
-	DXC,
-	GLSLANG,
-	SPIRV_DIS,
-	CLANG,
-	VISUAL_STUDIO,
-	GCC,
-	GENERIC_C_CPP,
-	NVRTC,
-	LLVM,
-	SPIRV_OPT,
-	METAL,
-	TINT,
-	SPIRV_LINK,
+	None          = 0,
+	FXC           = 1,
+	DXC           = 2,
+	GLSLANG       = 3,
+	SPIRV_DIS     = 4,
+	CLANG         = 5,
+	VISUAL_STUDIO = 6,
+	GCC           = 7,
+	GENERIC_C_CPP = 8,
+	NVRTC         = 9,
+	LLVM          = 10,
+	SPIRV_OPT     = 11,
+	METAL         = 12,
+	TINT          = 13,
+	SPIRV_LINK    = 14,
+	COUNT_OF      = 15,
 }
 
 
 CompileTarget :: enum i32 {
-	UNKNOWN,
-	None,
-	GLSL,
-	GLSL_VULKAN_DEPRECATED,
-	GLSL_VULKAN_ONE_DESC_DEPRECATED,
-	HLSL,
-	SPIRV,
-	SPIRV_ASM,
-	DXBC,
-	DXBC_ASM,
-	DXIL,
-	DXIL_ASM,
-	C_SOURCE,
-	CPP_SOURCE,
-	HOST_EXECUTABLE,
-	SHADER_SHARED_LIBRARY,
-	SHADER_HOST_CALLABLE,
-	CUDA_SOURCE,
-	PTX,
-	CUDA_OBJECT_CODE,
-	OBJECT_CODE,
-	HOST_CPP_SOURCE,
-	HOST_HOST_CALLABLE,
-	CPP_PYTORCH_BINDINGS,
-	METAL,
-	METAL_LIB,
-	METAL_LIB_ASM,
-	HOST_SHARED_LIBRARY,
-	WGSL,
-	WGSL_SPIRV_ASM,
-	WGSL_SPIRV,
-	HOST_VM,
+	UNKNOWN                           = 0,
+	None                              = 1,
+	GLSL                              = 2,
+	GLSL_VULKAN_DEPRECATED            = 3,
+	GLSL_VULKAN_ONE_DESC_DEPRECATED   = 4,
+	HLSL                              = 5,
+	SPIRV                             = 6,
+	SPIRV_ASM                         = 7,
+	DXBC                              = 8,
+	DXBC_ASM                          = 9,
+	DXIL                              = 10,
+	DXIL_ASM                          = 11,
+	C_SOURCE                          = 12,
+	CPP_SOURCE                        = 13,
+	HOST_EXECUTABLE                   = 14,
+	SHADER_SHARED_LIBRARY             = 15,
+	SHADER_HOST_CALLABLE              = 16,
+	CUDA_SOURCE                       = 17,
+	PTX                               = 18,
+	CUDA_OBJECT_CODE                  = 19,
+	OBJECT_CODE                       = 20,
+	HOST_CPP_SOURCE                   = 21,
+	HOST_HOST_CALLABLE                = 22,
+	CPP_PYTORCH_BINDING               = 23,
+	CPP_PYTORCH_BINDINGS              = CPP_PYTORCH_BINDING, // compatibility alias
+	METAL                             = 24,
+	METAL_LIB                         = 25,
+	METAL_LIB_ASM                     = 26,
+	HOST_SHARED_LIBRARY               = 27,
+	WGSL                              = 28,
+	WGSL_SPIRV_ASM                    = 29,
+	WGSL_SPIRV                        = 30,
+	HOST_VM                           = 31,
+	CPP_HEADER                        = 32,
+	CUDA_HEADER                       = 33,
+	HOST_OBJECT_CODE                  = 34,
+	HOST_LLVM_IR                      = 35,
+	SHADER_LLVM_IR                    = 36,
+	COUNT_OF                          = 37,
 }
 
 ContainerFormat :: enum i32 {
-	NONE,
-	CONTAINER_FORMAT_SLANG_MODULE,
+	NONE                          = 0,
+	CONTAINER_FORMAT_SLANG_MODULE = 1,
 }
 
 ArchiveType :: enum i32 {
-	UNDEFINED,
-	ZIP,
-	RIFF,
-	RIFF_DEFLATE,
-	RIFF_LZ4,
+	UNDEFINED    = 0,
+	ZIP          = 1,
+	RIFF         = 2,
+	RIFF_DEFLATE = 3,
+	RIFF_LZ4     = 4,
+	COUNT_OF     = 5,
 }
 
-// TODO(Dragos): check correctness of the generated bitset
-// Note(Dragos): the SlangCompileFlags are defined as 1 << n, so declaring things like this makes it slightly incompatible. This needs to be checked in practice
+// These values are bit positions; the compile-time assertions below verify the ABI masks.
 CompileFlag :: enum u32 {
 	NO_MANGLING = 3,
-	NO_CODEGEN = 4,
-	OBFUSCATE = 5,
+	NO_CODEGEN  = 4,
+	OBFUSCATE   = 5,
 	// NO_CHECKING = 0,
 	// SPLIT_MIXED_TYPES = 0,
 }
@@ -116,283 +124,291 @@ kDefaultTargetFlags :: TargetFlags {
 }
 
 FloatingPointMode :: enum u32 {
-	DEFAULT,
-	FAST,
-	PRECISE,
+	DEFAULT = 0,
+	FAST    = 1,
+	PRECISE = 2,
 }
 
 FpDenormalMode :: enum u32 {
-	ANY,
-	PRESERVE,
-	FTZ,
+	ANY      = 0,
+	PRESERVE = 1,
+	FTZ      = 2,
 }
 
 LineDirectiveMode :: enum u32 {
-	DEFAULT,
-	NONE,
-	STANDARD,
-	GLSL,
-	SOURCE_MAP,
+	DEFAULT    = 0,
+	NONE       = 1,
+	STANDARD   = 2,
+	GLSL       = 3,
+	SOURCE_MAP = 4,
 }
 
 SourceLanguage :: enum i32 {
-	Unknown,
-	SLANG,
-	HLSL,
-	GLSL,
-	C,
-	CPP,
-	CUDA,
-	SPIRV,
-	METAL,
-	WGSL,
+	Unknown  = 0,
+	SLANG    = 1,
+	HLSL     = 2,
+	GLSL     = 3,
+	C        = 4,
+	CPP      = 5,
+	CUDA     = 6,
+	SPIRV    = 7,
+	METAL    = 8,
+	WGSL     = 9,
+	LLVM     = 10,
+	COUNT_OF = 11,
 }
 
 ProfileID :: enum u32 {
-	Unknown,
+	Unknown = 0,
 }
 
 CapabilityID :: enum i32 {
-	UNKNOWN,
+	UNKNOWN = 0,
 }
 
 MatrixLayoutMode :: enum u32 {
-	UNKNOWN,
-	ROW_MAJOR,
-	COLUMN_MAJOR,
+	UNKNOWN      = 0,
+	ROW_MAJOR    = 1,
+	COLUMN_MAJOR = 2,
 }
 
 Stage :: enum u32 {
-	NONE,
-	VERTEX,
-	HULL,
-	DOMAIN,
-	GEOMETRY,
-	FRAGMENT,
-	COMPUTE,
-	RAY_GENERATION,
-	INTERSECTION,
-	ANY_HIT,
-	CLOSEST_HIT,
-	MISS,
-	CALLABLE,
-	MESH,
-	AMPLIFICATION,
-	DISPATCH,
+	NONE           = 0,
+	VERTEX         = 1,
+	HULL           = 2,
+	DOMAIN         = 3,
+	GEOMETRY       = 4,
+	FRAGMENT       = 5,
+	COMPUTE        = 6,
+	RAY_GENERATION = 7,
+	INTERSECTION   = 8,
+	ANY_HIT        = 9,
+	CLOSEST_HIT    = 10,
+	MISS           = 11,
+	CALLABLE       = 12,
+	MESH           = 13,
+	AMPLIFICATION  = 14,
+	DISPATCH       = 15,
+	NODE           = 16,
+	COUNT          = 17,
 	PIXEL = FRAGMENT, // alias
 }
 
 DebugInfoLevel :: enum u32 {
-	NONE,
-	MINIMAL,
-	STANDARD,
-	MAXIMAL,
+	NONE     = 0,
+	MINIMAL  = 1,
+	STANDARD = 2,
+	MAXIMAL  = 3,
 }
 
 DebugInfoFormat :: enum u32 {
-	DEFAULT,
-	C7,
-	PDB,
-	STABS,
-	COFF,
-	DWARF,
+	DEFAULT  = 0,
+	C7       = 1,
+	PDB      = 2,
+	STABS    = 3,
+	COFF     = 4,
+	DWARF    = 5,
+	COUNT_OF = 6,
 }
 
 OptimizationLevel :: enum u32 {
-	NONE,
-	DEFAULT,
-	HIGH,
-	MAXIMAL,
+	NONE    = 0,
+	DEFAULT = 1,
+	HIGH    = 2,
+	MAXIMAL = 3,
 }
 
-// Note(Dragos): the enum integral is not specified here
 EmitSpirvMethod :: enum i32 {
-	DEFAULT,
-	VIA_GLSL,
-	DIRECTLY,
+	DEFAULT  = 0,
+	VIA_GLSL = 1,
+	DIRECTLY = 2,
+}
+
+EmitCPUMethod :: enum i32 {
+	DEFAULT  = 0,
+	VIA_CPP  = 1,
+	VIA_LLVM = 2,
+}
+
+DiagnosticColor :: enum i32 {
+	AUTO   = 0,
+	ALWAYS = 1,
+	NEVER  = 2,
+}
+
+WarningLevel :: enum i32 {
+	DEFAULT  = 0,
+	ALL      = 1,
+	EXTRA    = 2,
+	PEDANTIC = 3,
 }
 
 CompilerOptionName :: enum i32 {
-	MacroDefine, // stringValue0: macro name;  stringValue1: macro value
-	DepFile,
-	EntryPointName,
-	Specialize,
-	Help,
-	HelpStyle,
-	Include, // stringValue: additional include path.
-	Language,
-	MatrixLayoutColumn,         // bool
-	MatrixLayoutRow,            // bool
-	ZeroInitialize,             // bool
-	IgnoreCapabilities,         // bool
-	RestrictiveCapabilityCheck, // bool
-	ModuleName,                 // stringValue0: module name.
-	Output,
-	Profile, // intValue0: profile
-	Stage,   // intValue0: stage
-	Target,  // intValue0: CodeGenTarget
-	Version,
-	WarningsAsErrors, // stringValue0: "all" or comma separated list of warning codes or names.
-	DisableWarnings,  // stringValue0: comma separated list of warning codes or names.
-	EnableWarning,    // stringValue0: warning code or name.
-	DisableWarning,   // stringValue0: warning code or name.
-	DumpWarningDiagnostics,
-	InputFilesRemain,
-	EmitIr,                        // bool
-	ReportDownstreamTime,          // bool
-	ReportPerfBenchmark,           // bool
-	ReportCheckpointIntermediates, // bool
-	SkipSPIRVValidation,           // bool
-	SourceEmbedStyle,
-	SourceEmbedName,
-	SourceEmbedLanguage,
-	DisableShortCircuit,            // bool
-	MinimumSlangOptimization,       // bool
-	DisableNonEssentialValidations, // bool
-	DisableSourceMap,               // bool
-	UnscopedEnum,                   // bool
-	PreserveParameters, // bool: preserve all resource parameters in the output code.
-	// Target
-
-	Capability,                // intValue0: CapabilityName
-	// @NOTE(Xaryen): ^might be an error since aforementioned enum doesn't exist
-	// and e.g. https://docs.shader-slang.org/en/latest/external/slang/docs/user-guide/a2-01-spirv-target-specific.html
-	// uses stringValue0 instead to set vk_mem_model
-	DefaultImageFormatUnknown, // bool
-	DisableDynamicDispatch,    // bool
-	DisableSpecialization,     // bool
-	FloatingPointMode,         // intValue0: FloatingPointMode
-	DebugInformation,          // intValue0: DebugInfoLevel
-	LineDirectiveMode,
-	Optimization, // intValue0: OptimizationLevel
-	Obfuscate,    // bool
-
-	VulkanBindShift, // intValue0 (higher 8 bits): kind; intValue0(lower bits): set; intValue1:
-					 // shift
-	VulkanBindGlobals,       // intValue0: index; intValue1: set
-	VulkanInvertY,           // bool
-	VulkanUseDxPositionW,    // bool
-	VulkanUseEntryPointName, // bool
-	VulkanUseGLLayout,       // bool
-	VulkanEmitReflection,    // bool
-
-	GLSLForceScalarLayout,   // bool
-	EnableEffectAnnotations, // bool
-
-	EmitSpirvViaGLSL,     // bool (will be deprecated)
-	EmitSpirvDirectly,    // bool (will be deprecated)
-	SPIRVCoreGrammarJSON, // stringValue0: json path
-	IncompleteLibrary,    // bool, when set, will not issue an error when the linked program has
-						  // unresolved extern function symbols.
-
-	// Downstream
-
-	CompilerPath,
-	DefaultDownstreamCompiler,
-	DownstreamArgs, // stringValue0: downstream compiler name. stringValue1: argument list, one
-					// per line.
-	PassThrough,
-
-	// Repro
-
-	DumpRepro,
-	DumpReproOnError,
-	ExtractRepro,
-	LoadRepro,
-	LoadReproDirectory,
-	ReproFallbackDirectory,
-
-	// Debugging
-
-	DumpAst,
-	DumpIntermediatePrefix,
-	DumpIntermediates, // bool
-	DumpIr,            // bool
-	DumpIrIds,
-	PreprocessorOutput,
-	OutputIncludes,
-	ReproFileSystem,
-	REMOVED_SerialIR, // deprecated and removed
-	SkipCodeGen,      // bool
-	ValidateIr,       // bool
-	VerbosePaths,
-	VerifyDebugSerialIr,
-	NoCodeGen, // Not used.
-
-	// Experimental
-
-	FileSystem,
-	Heterogeneous,
-	NoMangle,
-	NoHLSLBinding,
-	NoHLSLPackConstantBufferElements,
-	ValidateUniformity,
-	AllowGLSL,
-	EnableExperimentalPasses,
-	BindlessSpaceIndex, // int
-
-	// Internal
-
-	ArchiveType,
-	CompileCoreModule,
-	Doc,
-
-	IrCompression, //< deprecated
-
-	LoadCoreModule,
-	ReferenceModule,
-	SaveCoreModule,
-	SaveCoreModuleBinSource,
-	TrackLiveness,
-	LoopInversion, // bool, enable loop inversion optimization
-
-	ParameterBlocksUseRegisterSpaces, // Deprecated
-	LanguageVersion,                  // intValue0: SlangLanguageVersion
-	TypeConformance, // stringValue0: additional type conformance to link, in the format of
-					 // "<TypeName>:<IInterfaceName>[=<sequentialId>]", for example
-					 // "Impl:IFoo=3" or "Impl:IFoo".
-	EnableExperimentalDynamicDispatch, // bool, experimental
-	EmitReflectionJSON,                // bool
-
-	CountOfParsableOptions,
-
-	// Used in parsed options only.
-	DebugInformationFormat,  // intValue0: DebugInfoFormat
-	VulkanBindShiftAll,      // intValue0: kind; intValue1: shift
-	GenerateWholeProgram,    // bool
-	UseUpToDateBinaryModule, // bool, when set, will only load
-							 // precompiled modules if it is up-to-date with its source.
-	EmbedDownstreamIR,       // bool
-	ForceDXLayout,           // bool
-
-	// Add this new option to the end of the list to avoid breaking ABI as much as possible.
-	// Setting of EmitSpirvDirectly or EmitSpirvViaGLSL will turn into this option internally.
-	EmitSpirvMethod, // enum SlangEmitSpirvMethod
-
-	SaveGLSLModuleBinSource,
-
-	SkipDownstreamLinking, // bool, experimental
-	DumpModule,
-
-	GetModuleInfo,              // Print serialized module version and name
-	GetSupportedModuleVersions, // Print the min and max module versions this compiler supports
-
-	EmitSeparateDebug, // bool
-
-	// Floating point denormal handling modes
-	DenormalModeFp16,
-	DenormalModeFp32,
-	DenormalModeFp64,
-
-	// Bitfield options
-	UseMSVCStyleBitfieldPacking, // bool
-
-	ForceCLayout, // bool
+	MacroDefine                       = 0,
+	DepFile                           = 1,
+	EntryPointName                    = 2,
+	Specialize                       = 3,
+	Help                             = 4,
+	HelpStyle                        = 5,
+	Include                          = 6,
+	Language                         = 7,
+	MatrixLayoutColumn               = 8,
+	MatrixLayoutRow                  = 9,
+	ZeroInitialize                   = 10,
+	IgnoreCapabilities               = 11,
+	RestrictiveCapabilityCheck       = 12,
+	ModuleName                       = 13,
+	Output                           = 14,
+	Profile                          = 15,
+	Stage                            = 16,
+	Target                           = 17,
+	Version                          = 18,
+	WarningsAsErrors                 = 19,
+	DisableWarnings                  = 20,
+	EnableWarning                    = 21,
+	DisableWarning                   = 22,
+	DumpWarningDiagnostics           = 23,
+	InputFilesRemain                 = 24,
+	EmitIr                           = 25,
+	ReportDownstreamTime             = 26,
+	ReportPerfBenchmark              = 27,
+	ReportCheckpointIntermediates    = 28,
+	SkipSPIRVValidation              = 29,
+	SourceEmbedStyle                 = 30,
+	SourceEmbedName                  = 31,
+	SourceEmbedLanguage              = 32,
+	DisableShortCircuit              = 33,
+	MinimumSlangOptimization         = 34,
+	DisableNonEssentialValidations   = 35,
+	DisableSourceMap                 = 36,
+	UnscopedEnum                     = 37,
+	PreserveParameters               = 38,
+	Capability                       = 39,
+	DefaultImageFormatUnknown        = 40,
+	DisableDynamicDispatch           = 41,
+	DisableSpecialization            = 42,
+	FloatingPointMode                = 43,
+	DebugInformation                 = 44,
+	LineDirectiveMode                = 45,
+	Optimization                     = 46,
+	Obfuscate                        = 47,
+	VulkanBindShift                  = 48,
+	VulkanBindGlobals                = 49,
+	VulkanInvertY                    = 50,
+	VulkanUseDxPositionW             = 51,
+	VulkanUseEntryPointName          = 52,
+	VulkanUseGLLayout                = 53,
+	VulkanEmitReflection             = 54,
+	GLSLForceScalarLayout            = 55,
+	EnableEffectAnnotations          = 56,
+	EmitSpirvViaGLSL                 = 57,
+	EmitSpirvDirectly                = 58,
+	SPIRVCoreGrammarJSON             = 59,
+	IncompleteLibrary                = 60,
+	CompilerPath                     = 61,
+	DefaultDownstreamCompiler        = 62,
+	DownstreamArgs                   = 63,
+	PassThrough                      = 64,
+	DumpRepro                        = 65,
+	DumpReproOnError                 = 66,
+	ExtractRepro                     = 67,
+	LoadRepro                        = 68,
+	LoadReproDirectory               = 69,
+	ReproFallbackDirectory           = 70,
+	DumpAst                          = 71,
+	DumpIntermediatePrefix           = 72,
+	DumpIntermediates                = 73,
+	DumpIr                           = 74,
+	DumpIrIds                        = 75,
+	PreprocessorOutput               = 76,
+	OutputIncludes                   = 77,
+	ReproFileSystem                  = 78,
+	REMOVED_SerialIR                 = 79,
+	SkipCodeGen                      = 80,
+	ValidateIr                       = 81,
+	VerbosePaths                     = 82,
+	VerifyDebugSerialIr              = 83,
+	NoCodeGen                        = 84,
+	FileSystem                       = 85,
+	Heterogeneous                    = 86,
+	NoMangle                         = 87,
+	NoHLSLBinding                    = 88,
+	NoHLSLPackConstantBufferElements = 89,
+	ValidateUniformity               = 90,
+	AllowGLSL                        = 91,
+	EnableExperimentalPasses         = 92,
+	BindlessSpaceIndex               = 93,
+	SPIRVResourceHeapStride          = 94,
+	SPIRVSamplerHeapStride           = 95,
+	ArchiveType                      = 96,
+	CompileCoreModule                = 97,
+	Doc                              = 98,
+	IrCompression                    = 99,
+	LoadCoreModule                   = 100,
+	ReferenceModule                  = 101,
+	SaveCoreModule                   = 102,
+	SaveCoreModuleBinSource          = 103,
+	TrackLiveness                    = 104,
+	LoopInversion                    = 105,
+	ParameterBlocksUseRegisterSpaces = 106,
+	LanguageVersion                  = 107,
+	TypeConformance                  = 108,
+	EnableExperimentalDynamicDispatch = 109,
+	EmitReflectionJSON               = 110,
+	CountOfParsableOptions           = 111,
+	DebugInformationFormat           = 112,
+	VulkanBindShiftAll               = 113,
+	GenerateWholeProgram             = 114,
+	UseUpToDateBinaryModule          = 115,
+	EmbedDownstreamIR                = 116,
+	ForceDXLayout                    = 117,
+	EmitSpirvMethod                  = 118,
+	SaveGLSLModuleBinSource          = 119,
+	SkipDownstreamLinking            = 120,
+	DumpModule                       = 121,
+	GetModuleInfo                    = 122,
+	GetSupportedModuleVersions       = 123,
+	EmitSeparateDebug                = 124,
+	DenormalModeFp16                 = 125,
+	DenormalModeFp32                 = 126,
+	DenormalModeFp64                 = 127,
+	UseMSVCStyleBitfieldPacking      = 128,
+	ForceCLayout                     = 129,
+	ExperimentalFeature              = 130,
+	ReportDetailedPerfBenchmark      = 131,
+	ValidateIRDetailed               = 132,
+	DumpIRBefore                     = 133,
+	DumpIRAfter                      = 134,
+	EmitCPUMethod                    = 135,
+	EmitCPUViaCPP                    = 136,
+	EmitCPUViaLLVM                   = 137,
+	LLVMTargetTriple                 = 138,
+	LLVMCPU                          = 139,
+	LLVMFeatures                     = 140,
+	EnableRichDiagnostics            = 141,
+	ReportDynamicDispatchSites       = 142,
+	EnableMachineReadableDiagnostics = 143,
+	DiagnosticColor                  = 144,
+	TraceCoverage                    = 145,
+	TraceCoverageBinding             = 146,
+	TraceCoverageReservedSpace       = 147,
+	TraceFunctionCoverage            = 148,
+	TraceBranchCoverage              = 149,
+	CoverageManifestOutput           = 150,
+	TraceCoverageCounterByteWidth    = 151,
+	TraceCoverageBoolean             = 152,
+	CompilerVersion                  = 153,
+	SPIRVUnifiedDescriptorHeapStride = 154,
+	WarningLevel                     = 155,
+	SeparateDebugInfoOutput          = 156,
+	DebugInfoIncludeSource           = 157,
+	TraceCoverageBindlessIndex       = 158,
+	CountOf                          = 159,
 }
 
 CompilerOptionValueKind :: enum i32 {
-	Int,
-	String,
+	Int    = 0,
+	String = 1,
 }
 
 CompileCoreModuleFlag :: enum u32 {
@@ -535,23 +551,24 @@ ISharedLibraryLoader :: struct #raw_union {
 }
 
 PathType :: enum u32 {
-	DIRECTORY,
-	FILE,
+	DIRECTORY = 0,
+	FILE      = 1,
 }
 
 FileSystemContentsCallback :: #type proc(pathType: PathType, name: cstring, userData: rawptr)
 
 OSPathKind :: enum u8 {
-	None,
-	Direct,
-	OperatingSystem,
+	None            = 0,
+	Direct          = 1,
+	OperatingSystem = 2,
 }
 
 PathKind :: enum i32 {
-	Simplified,
-	Canonical,
-	Display,
-	OperatingSystem,
+	Simplified      = 0,
+	Canonical       = 1,
+	Display         = 2,
+	OperatingSystem = 3,
+	CountOf         = 4,
 }
 
 // TODO(Dragos): should we replace #subtype with using?
@@ -583,14 +600,15 @@ IMutableFileSystem :: struct #raw_union {
 }
 
 WriterChannel :: enum u32 {
-	DIAGNOSTIC,
-	STD_OUTPUT,
-	STD_ERROR,
+	DIAGNOSTIC = 0,
+	STD_OUTPUT = 1,
+	STD_ERROR  = 2,
+	COUNT_OF   = 3,
 }
 
 WriterMode :: enum u32 {
-	TEXT,
-	BINARY,
+	TEXT   = 0,
+	BINARY = 1,
 }
 
 IWriter :: struct #raw_union {
@@ -689,9 +707,9 @@ IModule :: struct #raw_union {
 }
 
 SpecializationArgKind :: enum i32 {
-	Unknown,
-	Type,
-	Expr,
+	Unknown = 0,
+	Type    = 1,
+	Expr    = 2,
 }
 
 SpecializationArg_fromType :: #force_inline proc "contextless"(inType: ^TypeReflection) -> (rs: SpecializationArg) {
@@ -707,12 +725,17 @@ SpecializationArg_fromExpr :: #force_inline proc "contextless"(inExpr: cstring) 
 }
 
 LanguageVersion :: enum i32 {
-	UNKNOWN = 0,
-	LEGACY  = 2018,
-	_2025   = 2025,
-	_2026   = 2026,
-	DEFAULT = LEGACY,
-	LATEST  = _2026,
+	UNKNOWN          = 0,
+	LEGACY           = 2018,
+	_202A            = 2025,
+	_2025            = 2025,
+	_202B            = 2026,
+	_2026            = 2026,
+	_202C            = 2027,
+	LANGAUGE_DEFAULT = LEGACY, // upstream compatibility typo
+	DEFAULT          = LEGACY,
+	LATEST           = _2026,
+	NEXT             = _202C,
 }
 
 // This must be constructed with the correct values. See `kGlobalSessionDescDefaultValues`.
@@ -784,23 +807,68 @@ SessionDesc :: struct {
 }
 
 ImageFormat :: enum u32 {
-	// TODO(Dragos): see slang-image-format-defs.h
+	unknown         = 0,
+	rgba32f         = 1,
+	rgba16f         = 2,
+	rg32f           = 3,
+	rg16f           = 4,
+	r11f_g11f_b10f = 5,
+	r32f            = 6,
+	r16f            = 7,
+	rgba16          = 8,
+	rgb10_a2        = 9,
+	rgba8           = 10,
+	rg16            = 11,
+	rg8             = 12,
+	r16             = 13,
+	r8              = 14,
+	rgba16_snorm    = 15,
+	rgba8_snorm     = 16,
+	rg16_snorm      = 17,
+	rg8_snorm       = 18,
+	r16_snorm       = 19,
+	r8_snorm        = 20,
+	rgba32i         = 21,
+	rgba16i         = 22,
+	rgba8i          = 23,
+	rg32i           = 24,
+	rg16i           = 25,
+	rg8i            = 26,
+	r32i            = 27,
+	r16i            = 28,
+	r8i             = 29,
+	rgba32ui        = 30,
+	rgba16ui        = 31,
+	rgb10_a2ui      = 32,
+	rgba8ui         = 33,
+	rg32ui          = 34,
+	rg16ui          = 35,
+	rg8ui           = 36,
+	r32ui           = 37,
+	r16ui           = 38,
+	r8ui            = 39,
+	r64ui           = 40,
+	r64i            = 41,
+	bgra8           = 42,
 }
 
 UNBOUNDED_SIZE :: ~uint(0)
 UNKNOWN_SIZE   :: UNBOUNDED_SIZE - 1
 
 LayoutRules :: enum u32 {
-	DEFAULT,
-	METAL_ARGUMENT_BUFFER_TIER_2,
+	DEFAULT                           = 0,
+	METAL_ARGUMENT_BUFFER_TIER_2      = 1,
+	DEFAULT_STRUCTURED_BUFFER         = 2,
+	DEFAULT_CONSTANT_BUFFER           = 3,
 }
 
 ContainerType :: enum i32 {
-	None,
-	UnsizedArray,
-	StructuredBuffer,
-	ConstantBuffer,
-	ParameterBlock,
+	None             = 0,
+	UnsizedArray     = 1,
+	StructuredBuffer = 2,
+	ConstantBuffer   = 3,
+	ParameterBlock   = 4,
+}
 }
 
 
@@ -852,8 +920,8 @@ ICompileResult :: struct #raw_union {
 }
 
 BuiltinModuleName :: enum i32 {
-	Core,
-	GLSL,
+	Core = 0,
+	GLSL = 1,
 }
 
 IGlobalSession :: struct #raw_union {

@@ -34,9 +34,9 @@ SlangReflectionGenericArg :: struct #raw_union {
 }
 
 ReflectionGenericArgType :: enum i32 {
-	TYPE,
-	INT,
-	BOOL,
+	TYPE = 0,
+	INT  = 1,
+	BOOL = 2,
 }
 
 Modifier :: struct {
@@ -57,17 +57,17 @@ ModifierID :: enum u32 {
 }
 
 SlangModifierID :: enum u32 {
-	SHARED,
-	NO_DIFF,
-	STATIC,
-	CONST,
-	EXPORT,
-	EXTERN,
-	DIFFERENTIABLE,
-	MUTATING,
-	IN,
-	OUT,
-	INOUT,
+	SHARED         = 0,
+	NO_DIFF        = 1,
+	STATIC         = 2,
+	CONST          = 3,
+	EXPORT         = 4,
+	EXTERN         = 5,
+	DIFFERENTIABLE = 6,
+	MUTATING       = 7,
+	IN             = 8,
+	OUT            = 9,
+	INOUT          = 10,
 }
 
 LayoutUnit        :: ParameterCategory
@@ -104,28 +104,28 @@ ParameterCategory :: enum u32 {
 }
 
 SlangParameterCategory :: enum u32 {
-	NONE,
-	MIXED,
-	CONSTANT_BUFFER,
-	SHADER_RESOURCE,
-	UNORDERED_ACCESS,
-	VARYING_INPUT,
-	VARYING_OUTPUT,
-	SAMPLER_STATE,
-	UNIFORM,
-	DESCRIPTOR_TABLE_SLOT,
-	SPECIALIZATION_CONSTANT,
-	PUSH_CONSTANT_BUFFER,
+	NONE                    = 0,
+	MIXED                   = 1,
+	CONSTANT_BUFFER         = 2,
+	SHADER_RESOURCE         = 3,
+	UNORDERED_ACCESS        = 4,
+	VARYING_INPUT           = 5,
+	VARYING_OUTPUT          = 6,
+	SAMPLER_STATE           = 7,
+	UNIFORM                 = 8,
+	DESCRIPTOR_TABLE_SLOT   = 9,
+	SPECIALIZATION_CONSTANT = 10,
+	PUSH_CONSTANT_BUFFER    = 11,
 	// HLSL register `space`, Vulkan GLSL `set`
-	REGISTER_SPACE,
+	REGISTER_SPACE = 12,
 	// TODO: Ellie, Both APIs treat mesh outputs as more or less varying output,
 	// Does it deserve to be represented here??
 	// A parameter whose type is to be specialized by a global generic type argument
-	GENERIC,
-	RAY_PAYLOAD,
-	HIT_ATTRIBUTES,
-	CALLABLE_PAYLOAD,
-	SHADER_RECORD,
+	GENERIC          = 13,
+	RAY_PAYLOAD      = 14,
+	HIT_ATTRIBUTES   = 15,
+	CALLABLE_PAYLOAD = 16,
+	SHADER_RECORD    = 17,
 	// An existential type parameter represents a "hole" that
 	// needs to be filled with a concrete type to enable
 	// generation of specialized code.
@@ -144,7 +144,7 @@ SlangParameterCategory :: enum u32 {
 	// we need to hae a *single* concrete type for all the array
 	// elements to be able to generate specialized code.
 	//
-	EXISTENTIAL_TYPE_PARAM,
+	EXISTENTIAL_TYPE_PARAM = 18,
 	// An existential object parameter represents a value
 	// that needs to be passed in to provide data for some
 	// interface-type shader paameter.
@@ -162,20 +162,20 @@ SlangParameterCategory :: enum u32 {
 	// element). This is consistent with the number of interface-type
 	// "objects" that are being passed through to the shader.
 	//
-	EXISTENTIAL_OBJECT_PARAM,
+	EXISTENTIAL_OBJECT_PARAM = 19,
 	// The register space offset for the sub-elements that occupies register spaces.
-	SUB_ELEMENT_REGISTER_SPACE,
+	SUB_ELEMENT_REGISTER_SPACE = 20,
 	// The input_attachment_index subpass occupancy tracker
-	SUBPASS,
+	SUBPASS = 21,
 	// Metal tier-1 argument buffer element [[id]].
-	METAL_ARGUMENT_BUFFER_ELEMENT,
+	METAL_ARGUMENT_BUFFER_ELEMENT = 22,
 	// Metal [[attribute]] inputs.
-	METAL_ATTRIBUTE,
+	METAL_ATTRIBUTE = 23,
 	// Metal [[payload]] inputs
-	METAL_PAYLOAD,
+	METAL_PAYLOAD = 24,
 
 	 //
-	COUNT,
+	COUNT = 25,
 
 	 // Aliases for Metal-specific categories.
 	METAL_BUFFER = CONSTANT_BUFFER,
@@ -212,26 +212,28 @@ TypeReflectionKind :: enum u32 {
 }
 
 SlangTypeKind :: enum u32 {
-	NONE,
-	STRUCT,
-	ARRAY,
-	MATRIX,
-	VECTOR,
-	SCALAR,
-	CONSTANT_BUFFER,
-	RESOURCE,
-	SAMPLER_STATE,
-	TEXTURE_BUFFER,
-	SHADER_STORAGE_BUFFER,
-	PARAMETER_BLOCK,
-	GENERIC_TYPE_PARAMETER,
-	INTERFACE,
-	OUTPUT_STREAM,
-	MESH_OUTPUT,
-	SPECIALIZED,
-	FEEDBACK,
-	POINTER,
-	DYNAMIC_RESOURCE,
+	NONE                   = 0,
+	STRUCT                 = 1,
+	ARRAY                  = 2,
+	MATRIX                 = 3,
+	VECTOR                 = 4,
+	SCALAR                 = 5,
+	CONSTANT_BUFFER        = 6,
+	RESOURCE               = 7,
+	SAMPLER_STATE          = 8,
+	TEXTURE_BUFFER         = 9,
+	SHADER_STORAGE_BUFFER  = 10,
+	PARAMETER_BLOCK        = 11,
+	GENERIC_TYPE_PARAMETER = 12,
+	INTERFACE              = 13,
+	OUTPUT_STREAM          = 14,
+	MESH_OUTPUT            = 15,
+	SPECIALIZED            = 16,
+	FEEDBACK               = 17,
+	POINTER                = 18,
+	DYNAMIC_RESOURCE       = 19,
+	ENUM                   = 20,
+	COUNT                  = 21,
 }
 
 TypeReflectionScalarType :: enum u32 {
@@ -249,25 +251,33 @@ TypeReflectionScalarType :: enum u32 {
 	UInt8   = u32(SlangScalarType(.UINT8)),
 	Int16   = u32(SlangScalarType(.INT16)),
 	UInt16  = u32(SlangScalarType(.UINT16)),
+	IntPtr  = u32(SlangScalarType(.INTPTR)),
+	UIntPtr = u32(SlangScalarType(.UINTPTR)),
+	BFloat16 = u32(SlangScalarType(.BFLOAT16)),
+	FloatE4M3 = u32(SlangScalarType(.FLOAT_E4M3)),
+	FloatE5M2 = u32(SlangScalarType(.FLOAT_E5M2)),
 }
 
 SlangScalarType :: enum u32 {
-	NONE,
-	VOID,
-	BOOL,
-	INT32,
-	UINT32,
-	INT64,
-	UINT64,
-	FLOAT16,
-	FLOAT32,
-	FLOAT64,
-	INT8,
-	UINT8,
-	INT16,
-	UINT16,
-	INTPTR,
-	UINTPTR,
+	NONE       = 0,
+	VOID       = 1,
+	BOOL       = 2,
+	INT32      = 3,
+	UINT32     = 4,
+	INT64      = 5,
+	UINT64     = 6,
+	FLOAT16    = 7,
+	FLOAT32    = 8,
+	FLOAT64    = 9,
+	INT8       = 10,
+	UINT8      = 11,
+	INT16      = 12,
+	UINT16     = 13,
+	INTPTR     = 14,
+	UINTPTR    = 15,
+	BFLOAT16   = 16,
+	FLOAT_E4M3 = 17,
+	FLOAT_E5M2 = 18,
 }
 
 
@@ -300,47 +310,48 @@ SlangResourceShape :: enum u32 {
 }
 
 SlangResourceAccess :: enum u32 {
-	NONE,
-	READ,
-	READ_WRITE,
-	RASTER_ORDERED,
-	APPEND,
-	CONSUME,
-	WRITE,
-	FEEDBACK,
+	NONE           = 0,
+	READ           = 1,
+	READ_WRITE     = 2,
+	RASTER_ORDERED = 3,
+	APPEND         = 4,
+	CONSUME        = 5,
+	WRITE          = 6,
+	FEEDBACK       = 7,
 	UNKNOWN = 0x7FFFFFFF,
 }
 
 DeclKind :: enum u32 {
-	UNSUPPORTED_FOR_REFLECTION,
-	STRUCT,
-	FUNC,
-	MODULE,
-	GENERIC,
-	VARIABLE,
-	NAMESPACE,
+	UNSUPPORTED_FOR_REFLECTION = 0,
+	STRUCT                     = 1,
+	FUNC                       = 2,
+	MODULE                     = 3,
+	GENERIC                    = 4,
+	VARIABLE                   = 5,
+	NAMESPACE                  = 6,
+	ENUM                       = 7,
 }
 
 BindingType :: enum u32 {
 	UNKNOWN = 0,
-	SAMPLER,
-	TEXTURE,
-	CONSTANT_BUFFER,
-	PARAMETER_BLOCK,
-	TYPED_BUFFER,
-	RAW_BUFFER,
-	COMBINED_TEXTURE_SAMPLER,
-	INPUT_RENDER_TARGET,
-	INLINE_UNIFORM_DATA,
-	RAY_TRACING_ACCELERATION_STRUCTURE,
-	VARYING_INPUT,
-	VARYING_OUTPUT,
-	EXISTENTIAL_VALUE,
-	PUSH_CONSTANT,
+	SAMPLER                            = 1,
+	TEXTURE                            = 2,
+	CONSTANT_BUFFER                    = 3,
+	PARAMETER_BLOCK                    = 4,
+	TYPED_BUFFER                       = 5,
+	RAW_BUFFER                         = 6,
+	COMBINED_TEXTURE_SAMPLER           = 7,
+	INPUT_RENDER_TARGET                = 8,
+	INLINE_UNIFORM_DATA                = 9,
+	RAY_TRACING_ACCELERATION_STRUCTURE = 10,
+	VARYING_INPUT                      = 11,
+	VARYING_OUTPUT                     = 12,
+	EXISTENTIAL_VALUE                  = 13,
+	PUSH_CONSTANT                      = 14,
 	MUTABLE_FLAG = 0x100,
 
-	// TODO(Dragos): fix typo in main repo SLANG_BINDING_TYPE_MUTABLE_TETURE
-	MUTABLE_TEXTURE = TEXTURE | MUTABLE_FLAG,
+	MUTABLE_TETURE = TEXTURE | MUTABLE_FLAG, // upstream ABI spelling
+	MUTABLE_TEXTURE = MUTABLE_TETURE,
 	MUTABLE_TYPED_BUFFER = TYPED_BUFFER | MUTABLE_FLAG,
 	MUTABLE_RAW_BUFFER = RAW_BUFFER | MUTABLE_FLAG,
 
