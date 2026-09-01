@@ -1,11 +1,11 @@
 package slang
 
 when ODIN_OS == .Windows {
-	foreign import libslang "lib/slang-compiler.lib"
+	foreign import libslang "lib/windows/slang-compiler.lib"
 } else when ODIN_OS == .Darwin {
-	foreign import libslang "lib/libslang-compiler.dylib"
+	foreign import libslang "lib/mac/libslang-compiler.dylib"
 } else when ODIN_OS == .Linux {
-	foreign import libslang "lib/libslang-compiler.so"
+	foreign import libslang "lib/linux/libslang-compiler.so"
 }
 _ :: libslang
 
