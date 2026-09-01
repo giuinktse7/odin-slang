@@ -7,6 +7,7 @@ variable_getUserAttributeCount   :: proc(this: ^VariableReflection) -> u32 { ret
 variable_getUserAttributeByIndex :: proc(this: ^VariableReflection, index: u32) -> ^Attribute { return (^Attribute)(ReflectionVariable_GetUserAttribute(this, index,)) }
 variable_findAttributeByName     :: proc(this: ^VariableReflection, globalSession: ^IGlobalSession, name: cstring,) -> ^Attribute { return (^Attribute)(ReflectionVariable_FindUserAttributeByName(this, globalSession, name,)) }
 variable_getDefaultValueInt      :: proc(this: ^VariableReflection, value: ^i64) -> Result { return ReflectionVariable_GetDefaultValueInt(this, value) }
+variable_getDefaultValueFloat    :: proc(this: ^VariableReflection, value: ^f32) -> Result { return ReflectionVariable_GetDefaultValueFloat(this, value) }
 
 type_getName               :: proc(this: ^TypeReflection) -> cstring { return ReflectionType_GetName(this) }
 type_getKind               :: proc(this: ^TypeReflection) -> TypeReflectionKind { return TypeReflectionKind(ReflectionType_GetKind(this)) }
@@ -54,6 +55,7 @@ program_layout_findTypeByName       :: proc(this: ^ProgramLayout, name: cstring)
 program_layout_findFunctionByName   :: proc(this: ^ProgramLayout, name: cstring) -> ^FunctionReflection { return Reflection_FindFunctionByName(this, name) }
 program_layout_findEntryPointByName :: proc(this: ^ProgramLayout, name: cstring) -> ^EntryPointReflection { return Reflection_findEntryPointByName(this, name) }
 program_layout_toJson               :: proc(this: ^ProgramLayout, outBlob: ^^IBlob) -> Result { return Reflection_ToJson(this, nil, outBlob) }
+program_layout_getBindlessSpaceIndex :: proc(this: ^ProgramLayout) -> Int { return Reflection_getBindlessSpaceIndex(this) }
 
 variable_layout_getVariable        :: proc(this: ^VariableLayoutReflection) -> ^VariableReflection { return ReflectionVariableLayout_GetVariable(this) }
 variable_layout_getTypeLayout      :: proc(this: ^VariableLayoutReflection) -> ^TypeLayoutReflection { return ReflectionVariableLayout_GetTypeLayout(this) }
@@ -93,7 +95,7 @@ function_getOverloadCount        :: proc(this: ^FunctionReflection) -> u32 { ret
 function_findModifier            :: proc(this: ^FunctionReflection, id: ModifierID) -> ^Modifier { return ReflectionFunction_FindModifier((this), cast(SlangModifierID)id) }
 function_getGenericContainer     :: proc(this: ^FunctionReflection) -> ^GenericReflection { return ReflectionFunction_GetGenericContainer(this) }
 function_applySpecializations    :: proc(this: ^FunctionReflection, generic: ^GenericReflection) -> ^FunctionReflection { return ReflectionFunction_applySpecializations(this, generic) }
-function_specializeWithArgTypes  :: proc(this: ^FunctionReflection, argCount: u32, types: ^TypeReflection) -> ^FunctionReflection { return ReflectionFunction_specializeWithArgTypes(this, int(argCount), types) }
+function_specializeWithArgTypes  :: proc(this: ^FunctionReflection, argCount: u32, types: [^]^TypeReflection) -> ^FunctionReflection { return ReflectionFunction_specializeWithArgTypes(this, int(argCount), types) }
 function_getOverload             :: proc(this: ^FunctionReflection, index: u32) -> ^FunctionReflection { return ReflectionFunction_getOverload(this, index) }
 
 generic_asDecl                 :: proc(this: ^GenericReflection) -> ^DeclReflection { return ReflectionGeneric_asDecl(this) }

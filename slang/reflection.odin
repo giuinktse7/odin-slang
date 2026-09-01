@@ -381,6 +381,7 @@ foreign libslang {
 	ReflectionVariable_FindUserAttributeByName :: proc(inVar: ^VariableReflection, session: ^IGlobalSession, name: cstring) -> ^Attribute ---
 	ReflectionVariable_HasDefaultValue :: proc(inVar: ^VariableReflection) -> bool ---
 	ReflectionVariable_GetDefaultValueInt :: proc(inVar: ^VariableReflection, rs: ^i64) -> Result ---
+	ReflectionVariable_GetDefaultValueFloat :: proc(inVar: ^VariableReflection, rs: ^f32) -> Result ---
 	ReflectionVariable_GetGenericContainer :: proc(var: ^VariableReflection) -> ^GenericReflection ---
 	ReflectionVariable_applySpecializations :: proc(var: ^VariableReflection, generic: ^GenericReflection) -> ^VariableReflection ---
 
@@ -415,7 +416,7 @@ foreign libslang {
 
 	ReflectionUserAttribute_GetName :: proc(attrib: ^Attribute) -> cstring ---
 	ReflectionUserAttribute_GetArgumentCount :: proc(attrib: ^Attribute) -> u32 ---
-	ReflectionUserAttribute_GetArgumentValueInt :: proc(attrib: ^Attribute, index: u32, rs: ^int) -> Result ---
+	ReflectionUserAttribute_GetArgumentValueInt :: proc(attrib: ^Attribute, index: u32, rs: ^i32) -> Result ---
 	ReflectionUserAttribute_GetArgumentValueFloat :: proc(attrib: ^Attribute, index: u32, rs: ^f32) -> Result ---
 	ReflectionUserAttribute_GetArgumentValueString :: proc(attrib: ^Attribute, index: u32, bufLen: ^uint) -> cstring ---
 
@@ -437,8 +438,8 @@ foreign libslang {
 	ReflectionTypeLayout_GetCategoryByIndex :: proc(inTypeLayout: ^TypeLayoutReflection, index: u32) -> ParameterCategory ---
 	ReflectionTypeLayout_GetMatrixLayoutMode :: proc(inTypeLayout: ^TypeLayoutReflection) -> MatrixLayoutMode ---
 	ReflectionTypeLayout_getGenericParamIndex :: proc(inTypeLayout: ^TypeLayoutReflection) -> i32 ---
-	ReflectionTypeLayout_getPendingDataTypeLayout :: proc() -> ^TypeLayoutReflection ---
-	ReflectionTypeLayout_getSpecializedTypePendingDataVarLayout :: proc() -> ^VariableLayoutReflection ---
+	ReflectionTypeLayout_getPendingDataTypeLayout :: proc(inTypeLayout: ^TypeLayoutReflection) -> ^TypeLayoutReflection ---
+	ReflectionTypeLayout_getSpecializedTypePendingDataVarLayout :: proc(inTypeLayout: ^TypeLayoutReflection) -> ^VariableLayoutReflection ---
 	ReflectionTypeLayout_getBindingRangeCount :: proc(inTypeLayout: ^TypeLayoutReflection) -> Int ---
 	ReflectionTypeLayout_getBindingRangeType :: proc(inTypeLayout: ^TypeLayoutReflection, index: Int) -> BindingType ---
 	ReflectionTypeLayout_isBindingRangeSpecializable :: proc(inTypeLayout: ^TypeLayoutReflection, index: Int) -> Int ---
@@ -461,18 +462,10 @@ foreign libslang {
 	ReflectionTypeLayout_getDescriptorSetDescriptorRangeCategory :: proc(inTypeLayout: ^TypeLayoutReflection, setIndex: Int, rangeIndex: Int) -> ParameterCategory ---
 	ReflectionTypeLayout_getSubObjectRangeSpaceOffset :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int) -> Int ---
 	ReflectionTypeLayout_getSubObjectRangeOffset :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int) -> ^VariableLayoutReflection ---
-	ReflectionTypeLayout_getBindingRangeSubObjectRangeIndex :: proc(inTypeLayout: ^TypeLayoutReflection, index: Int) -> Int ---
 	ReflectionTypeLayout_getFieldBindingRangeOffset :: proc(inTypeLayout: ^TypeLayoutReflection, fieldIndex: Int) -> Int ---
 	ReflectionTypeLayout_getExplicitCounterBindingRangeOffset :: proc(inTypeLayout: ^TypeLayoutReflection) -> Int ---
 	ReflectionTypeLayout_getSubObjectRangeCount :: proc(inTypeLayout: ^TypeLayoutReflection) -> Int ---
-	ReflectionTypeLayout_getSubObjectRangeObjectCount :: proc(inTypeLayout: ^TypeLayoutReflection, index: Int) -> Int ---
 	ReflectionTypeLayout_getSubObjectRangeBindingRangeIndex :: proc(inTypeLayout: ^TypeLayoutReflection, index: Int) -> Int ---
-	ReflectionTypeLayout_getSubObjectRangeTypeLayout :: proc(inTypeLayout: ^TypeLayoutReflection, index: Int) -> ^TypeLayoutReflection ---
-	ReflectionTypeLayout_getSubObjectRangeDescriptorRangeCount :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int) -> Int ---
-	ReflectionTypeLayout_getSubObjectRangeDescriptorRangeBindingType :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int, bindingRangeIndexInSubObject: Int) -> BindingType ---
-	ReflectionTypeLayout_getSubObjectRangeDescriptorRangeBindingCount :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int, bindingRangeIndexInSubObject: Int) -> Int ---
-	ReflectionTypeLayout_getSubObjectRangeDescriptorRangeIndexOffset :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int, bindingRangeIndexInSubObject: Int) -> Int ---
-	ReflectionTypeLayout_getSubObjectRangeDescriptorRangeSpaceOffset :: proc(inTypeLayout: ^TypeLayoutReflection, subObjectRangeIndex: Int, bindingRangeIndexInSubObject: Int) -> Int ---
 
 	ReflectionVariableLayout_GetVariable :: proc(inVarLayout: ^VariableLayoutReflection) -> ^VariableReflection ---
 	ReflectionVariableLayout_GetTypeLayout :: proc(inVarLayout: ^VariableLayoutReflection) -> ^TypeLayoutReflection ---
@@ -482,7 +475,7 @@ foreign libslang {
 	ReflectionVariableLayout_GetSemanticName :: proc(inVarLayout: ^VariableLayoutReflection) -> cstring ---
 	ReflectionVariableLayout_GetSemanticIndex :: proc(inVarLayout: ^VariableLayoutReflection) -> uint ---
 	ReflectionVariableLayout_getStage :: proc(inVarLayout: ^VariableLayoutReflection) -> Stage ---
-	ReflectionVariableLayout_getPendingDataLayout :: proc() -> ^VariableLayoutReflection ---
+	ReflectionVariableLayout_getPendingDataLayout :: proc(inVarLayout: ^VariableLayoutReflection) -> ^VariableLayoutReflection ---
 
 	ReflectionFunction_asDecl :: proc(inFunc: ^FunctionReflection) -> ^DeclReflection ---
 	ReflectionFunction_GetName :: proc(inFunc: ^FunctionReflection) -> cstring ---
@@ -495,7 +488,7 @@ foreign libslang {
 	ReflectionFunction_GetParameter :: proc(inFunc: ^FunctionReflection, index: u32) -> ^VariableReflection ---
 	ReflectionFunction_GetGenericContainer :: proc(func: ^FunctionReflection) -> ^GenericReflection ---
 	ReflectionFunction_applySpecializations :: proc(func: ^FunctionReflection, generic: ^GenericReflection) -> ^FunctionReflection ---
-	ReflectionFunction_specializeWithArgTypes :: proc(func: ^FunctionReflection, argTypeCount: Int, argTypes: ^TypeReflection) -> ^FunctionReflection ---
+	ReflectionFunction_specializeWithArgTypes :: proc(func: ^FunctionReflection, argTypeCount: Int, argTypes: [^]^TypeReflection) -> ^FunctionReflection ---
 	ReflectionFunction_isOverloaded :: proc(func: ^FunctionReflection) -> bool ---
 	ReflectionFunction_getOverloadCount :: proc(func: ^FunctionReflection) -> u32 ---
 	ReflectionFunction_getOverload :: proc(func: ^FunctionReflection, index: u32) -> ^FunctionReflection ---
@@ -539,10 +532,10 @@ foreign libslang {
 	ReflectionEntryPoint_getStage :: proc(inEntryPoint: ^EntryPointReflection) -> Stage ---
 	ReflectionEntryPoint_getComputeThreadGroupSize :: proc(inEntryPoint: ^EntryPointReflection, axisCount: UInt, outSizeAlongAxis: ^UInt) ---
 	ReflectionEntryPoint_getComputeWaveSize :: proc(inEntryPoint: ^EntryPointReflection, outWaveSize: ^UInt) ---
-	ReflectionEntryPoint_usesAnySampleRateInput :: proc(inEntryPoint: ^EntryPointReflection) -> int ---
+	ReflectionEntryPoint_usesAnySampleRateInput :: proc(inEntryPoint: ^EntryPointReflection) -> i32 ---
 	ReflectionEntryPoint_getVarLayout :: proc(inEntryPoint: ^EntryPointReflection) -> ^VariableLayoutReflection ---
 	ReflectionEntryPoint_getResultVarLayout :: proc(inEntryPoint: ^EntryPointReflection) -> ^VariableLayoutReflection ---
-	ReflectionEntryPoint_hasDefaultConstantBuffer :: proc(inEntryPoint: ^EntryPointReflection) -> int ---
+	ReflectionEntryPoint_hasDefaultConstantBuffer :: proc(inEntryPoint: ^EntryPointReflection) -> i32 ---
 
 	ReflectionTypeParameter_GetName :: proc(inTypeParam: ^TypeParameterReflection) -> cstring ---
 	ReflectionTypeParameter_GetIndex :: proc(inTypeParam: ^TypeParameterReflection) -> u32 ---
@@ -560,10 +553,11 @@ foreign libslang {
 	Reflection_findEntryPointByName :: proc(inProgram: ^ProgramLayout, name: cstring) -> ^EntryPointReflection ---
 	Reflection_getGlobalConstantBufferBinding :: proc(inProgram: ^ProgramLayout) -> UInt ---
 	Reflection_getGlobalConstantBufferSize :: proc(inProgram: ^ProgramLayout) -> uint ---
-	Reflection_specializeType :: proc(inProgramLayout: ^ProgramLayout, inType: ^TypeReflection, specializationArgCount: Int, specializationArgs: ^TypeReflection, outDiagnostics: ^^IBlob) -> ^TypeReflection ---
-	Reflection_specializeGeneric :: proc(inProgramLayout: ^ProgramLayout, generic: ^GenericReflection, argCount: Int, argTypes: ^GenericArgType, args: ^SlangReflectionGenericArg, outDiagnostics: ^^IBlob) -> ^GenericReflection ---
+	Reflection_specializeType :: proc(inProgramLayout: ^ProgramLayout, inType: ^TypeReflection, specializationArgCount: Int, specializationArgs: [^]^TypeReflection, outDiagnostics: ^^IBlob) -> ^TypeReflection ---
+	Reflection_specializeGeneric :: proc(inProgramLayout: ^ProgramLayout, generic: ^GenericReflection, argCount: Int, argTypes: [^]ReflectionGenericArgType, args: [^]SlangReflectionGenericArg, outDiagnostics: ^^IBlob) -> ^GenericReflection ---
 	Reflection_getHashedStringCount :: proc(reflection: ^ProgramLayout) -> UInt ---
 	Reflection_getHashedString :: proc(reflection: ^ProgramLayout, index: UInt, outCount: ^uint) -> cstring ---
+	Reflection_getBindlessSpaceIndex :: proc(reflection: ^ProgramLayout) -> Int ---
 
 	ComputeStringHash :: proc(chars: cstring, count: uint) -> u32 ---
 

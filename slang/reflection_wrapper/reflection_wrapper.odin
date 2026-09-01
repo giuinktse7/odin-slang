@@ -13,6 +13,7 @@ g_VariableReflection_Vtable := VariableReflection_Vtable{
 	getUserAttributeByIndex = sp.variable_getUserAttributeByIndex,
 	findAttributeByName     = sp.variable_findAttributeByName,
 	getDefaultValueInt      = sp.variable_getDefaultValueInt,
+	getDefaultValueFloat    = sp.variable_getDefaultValueFloat,
 }
 
 @(rodata)
@@ -137,6 +138,7 @@ g_ProgramLayout_Vtable := ProgramLayout_Vtable{
 	findFunctionByName             = program_layout_findFunctionByName,
 	findEntryPointByName           = program_layout_findEntryPointByName,
 	toJson                         = sp.program_layout_toJson,
+	getBindlessSpaceIndex          = sp.program_layout_getBindlessSpaceIndex,
 }
 
 @(rodata)
@@ -453,7 +455,7 @@ function_applySpecializations :: proc(this: ^sp.FunctionReflection, generic: ^sp
 	return function
  }
 
-function_specializeWithArgTypes :: proc(this: ^sp.FunctionReflection, argCount: u32, types: ^sp.TypeReflection) -> FunctionReflection {
+function_specializeWithArgTypes :: proc(this: ^sp.FunctionReflection, argCount: u32, types: [^]^sp.TypeReflection) -> FunctionReflection {
 	function: FunctionReflection
 	function.vtable   = &g_FunctionReflection_Vtable
 	function.function = sp.ReflectionFunction_specializeWithArgTypes(this, int(argCount), types)
