@@ -3,15 +3,15 @@ package slang
 import "core:c"
 
 when ODIN_OS == .Windows {
-	foreign import libslang "lib/slang.lib"
+	foreign import libslang "lib/slang-compiler.lib"
 }
 
 when ODIN_OS == .Darwin {
-	foreign import libslang "lib/libslang.dylib"
+	foreign import libslang "lib/libslang-compiler.dylib"
 }
 
 when ODIN_OS == .Linux {
-	foreign import libslang "lib/libslang.so"
+	foreign import libslang "lib/libslang-compiler.so"
 }
 
 // SlangInt and SlangUInt are explicitly pointer-sized in slang.h.
